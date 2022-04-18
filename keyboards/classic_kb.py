@@ -1,5 +1,10 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 
+
+##########################
+#   DELETE_KB
+##########################
+kb_delete = ReplyKeyboardRemove()
 ###########################
 #          START
 ###########################
@@ -11,16 +16,22 @@ kb_start.row(kb_users, kb_gen)
 ############################
 #      ADMIN_PANEL
 ############################
-btn_get_tb_today = KeyboardButton("Таблица сегодня")
-btn_get_tb_date = KeyboardButton("Таблица за дату")
+btn_get_tb = KeyboardButton("Выгрузить таблицу")
 btn_add_user = KeyboardButton("Добавить Подрядчика")
 btn_edit_user = KeyboardButton("Редактировать Подрядчиков")
 btn_get_info_users = KeyboardButton("Информация об орг-ях")
 btn_back = KeyboardButton("Назад")
 
 kb_admin_panel = ReplyKeyboardMarkup(resize_keyboard=True)
-kb_admin_panel.row(btn_get_tb_today,
-                   btn_get_tb_date, btn_add_user).row(btn_get_info_users, btn_back)
+kb_admin_panel.row(btn_get_tb, btn_add_user).row(btn_get_info_users, btn_back)
+
+############################
+#          GET TABLE
+###########################
+btn_get_table_today = KeyboardButton("Таблица за Сегодня")
+btn_get_table_date = KeyboardButton("Таблица за Дату")
+kb_get_table_panel = ReplyKeyboardMarkup(resize_keyboard=True).row(btn_get_table_today, btn_get_table_date, btn_back)
+
 ############################
 #       USER_PANEL
 ############################
@@ -29,5 +40,15 @@ btn_user_edit_form = KeyboardButton("Редактировать форму")
 kb_user_panel = ReplyKeyboardMarkup(resize_keyboard=True)
 kb_user_panel.row(btn_user_create_form, btn_user_edit_form, btn_back)
 
+############################
+#       CREATE_FORM
+############################
+btn_write_name_work = KeyboardButton('Ввести наименование работ')
+btn_choose_name_work = KeyboardButton('Выбрать наименование работ')
+btn_form_back = KeyboardButton('Назад')
+kb_form_name_work = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(btn_write_name_work, btn_choose_name_work).row(btn_form_back)
 
-
+##########################
+#         BACK
+#########################
+kb_btn_back = ReplyKeyboardMarkup(resize_keyboard=True).add(btn_back)
