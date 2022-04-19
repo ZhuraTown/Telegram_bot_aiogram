@@ -18,3 +18,8 @@ class StatesUser(StatesGroup):
     user_edit_form = State()
     form_name_work = State()
 
+
+class RegisterUser(StatesGroup):
+    write_name = State()
+    write_comment = State()
+    add_or_delete = State()

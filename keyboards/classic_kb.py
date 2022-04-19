@@ -48,6 +48,10 @@ btn_choose_name_work = KeyboardButton('Выбрать наименование �
 btn_form_back = KeyboardButton('Назад')
 kb_form_name_work = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(btn_write_name_work, btn_choose_name_work).row(btn_form_back)
 
+btn_save = KeyboardButton('Сохранить')
+btn_cancel = KeyboardButton('Отменить')
+kb_finish_register_company = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(btn_save, btn_cancel)
+
 ##########################
 #         BACK
 #########################

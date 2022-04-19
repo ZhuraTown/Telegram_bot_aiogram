@@ -1,5 +1,7 @@
 from create_bot import bot, dp
 from aiogram import executor
+
+from db_sqlite.sqlite_db import create_db
 from handlers.users import register_handlers_users
 from handlers.admin import register_handlers_admin
 from handlers.start_work import register_handlers_start_work
