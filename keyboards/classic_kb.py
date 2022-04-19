@@ -21,9 +21,10 @@ btn_add_user = KeyboardButton("Добавить Подрядчика")
 btn_edit_user = KeyboardButton("Редактировать Подрядчиков")
 btn_get_info_users = KeyboardButton("Информация об орг-ях")
 btn_back = KeyboardButton("Назад")
+btn_exit = KeyboardButton("Выйти")
 
-kb_admin_panel = ReplyKeyboardMarkup(resize_keyboard=True)
-kb_admin_panel.row(btn_get_tb, btn_add_user).row(btn_get_info_users, btn_back)
+kb_admin_panel = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+kb_admin_panel.row(btn_get_tb, btn_add_user).row(btn_get_info_users, btn_exit)
 
 ############################
 #          GET TABLE

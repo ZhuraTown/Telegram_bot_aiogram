@@ -10,3 +10,8 @@ user_inline_panel = InlineKeyboardMarkup(row_width=1).row(
     InlineKeyboardButton(text="Назад", callback_data='back_user_panel'))
 
 
+edit_company = InlineKeyboardMarkup(row_width=1).row(
+    InlineKeyboardButton(text='Редактировать', callback_data='edit_company'),
+    InlineKeyboardButton(text='Удалить', callback_data='del_company'),
+)
+

@@ -23,3 +23,7 @@ class RegisterUser(StatesGroup):
     write_name = State()
     write_comment = State()
     add_or_delete = State()
+
+
+class Companies(StatesGroup):
+    list_companies = State()
