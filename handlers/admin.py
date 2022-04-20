@@ -1,6 +1,6 @@
 from aiogram import types, Dispatcher
 from keyboards.classic_kb import (kb_admin_panel, kb_get_table_panel,
-                                  kb_btn_back, kb_finish_register_company)
+                                  kb_btn_back, kb_finish_register_company, kb_start)
 from keyboards.inline_kb import edit_company
 from aiogram.dispatcher import FSMContext
 
@@ -55,6 +55,13 @@ async def get_information_companies(message: types.Message):
     await message.answer("Информация об организациях. Выберите действие или вернитесь назад", reply_markup=kb_btn_back)
 
 
+async def exit_to_main_menu(message: types.Message, state: FSMContext):
+    await message.delete()
+    await state.reset_state()
+    await message.answer('Цель бота, упростить заполнение табеля рабочего времени сотрудников Лахта Центр\n'
+                         'Введите PIN_CODE для входа в личный кабинет', reply_markup=kb_start)
+
+
 def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(back_to_admin_panel, lambda message: 'Назад' in message.text,
                                 state=[StatesAdmin.admin_table_menu,
@@ -66,5 +73,6 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(get_table, lambda message: 'Выгрузить таблицу' in message.text)
     dp.register_message_handler(add_company_user, lambda message: 'Добавить Подрядчика' in message.text, state=None)
     dp.register_message_handler(get_information_companies, lambda message: 'Информация об орг-ях' in message.text, state=None)
+    dp.register_message_handler(exit_to_main_menu, lambda message: 'Выйти' in message.text)
     dp.register_message_handler(write_company_name, state=RegisterUser.write_name)
     dp.register_message_handler(write_company_comment, state=RegisterUser.write_comment)
