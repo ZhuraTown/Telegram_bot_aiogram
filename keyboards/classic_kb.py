@@ -22,6 +22,7 @@ btn_edit_user = KeyboardButton("Редактировать Подрядчико�
 btn_get_info_users = KeyboardButton("Информация об орг-ях")
 btn_back = KeyboardButton("Назад")
 btn_exit = KeyboardButton("Выйти")
+btn_back_menu = KeyboardButton('В главное меню')
 
 kb_admin_panel = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 kb_admin_panel.row(btn_get_tb, btn_add_user).row(btn_get_info_users, btn_exit)
@@ -57,3 +58,4 @@ kb_finish_register_company = ReplyKeyboardMarkup(resize_keyboard=True, one_time_
 #         BACK
 #########################
 kb_btn_back = ReplyKeyboardMarkup(resize_keyboard=True).add(btn_back)
+kb_btn_back_menu = ReplyKeyboardMarkup(resize_keyboard=True).add(btn_back_menu)
