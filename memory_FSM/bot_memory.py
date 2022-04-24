@@ -19,3 +19,17 @@ class Companies(StatesGroup):
     list_companies = State()
 
 
+class StatesUsers(StatesGroup):
+    start_user_pamel = State()
+
+    create_new_form = State()
+
+    write_name_work = State()
+    select_name_work = State()
+
+    write_stage_work = State()
+
+    write_build_work = State()
+    select_build_work = State()
+
+

@@ -37,10 +37,10 @@ kb_get_table_panel = ReplyKeyboardMarkup(resize_keyboard=True).row(btn_get_table
 ############################
 #       USER_PANEL
 ############################
-btn_user_create_form = KeyboardButton("Заполнить форму")
-btn_user_edit_form = KeyboardButton("Редактировать форму")
+btn_user_create_form = KeyboardButton("Создать форму")
+btn_user_edit_form = KeyboardButton("Просмотреть ранее созданные формы")
 kb_user_panel = ReplyKeyboardMarkup(resize_keyboard=True)
-kb_user_panel.row(btn_user_create_form, btn_user_edit_form, btn_back)
+kb_user_panel.row(btn_user_create_form, btn_user_edit_form, btn_exit)
 
 ############################
 #       CREATE_FORM
