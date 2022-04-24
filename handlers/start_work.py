@@ -2,7 +2,6 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 
 from keyboards.classic_kb import kb_start, kb_admin_panel, kb_user_panel
-from keyboards.inline_kb import start_inline_kb, user_inline_panel
 from memory_FSM.bot_memory import StatesAdminUser
 from create_bot import dp, bot
 

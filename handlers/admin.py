@@ -1,12 +1,20 @@
 from aiogram import types, Dispatcher
 from keyboards.classic_kb import (kb_admin_panel, kb_get_table_panel,
                                   kb_btn_back, kb_finish_register_company, kb_btn_back_menu)
-from keyboards.inline_kb import edit_company
-from aiogram.dispatcher import FSMContext
+
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from keyboards.inlines_kb.callback_datas import delete_callback
+from create_bot import dp
+
+from data_base.db_commands import CommandsDB
 
 from memory_FSM.bot_memory import Companies, StatesAdminUser
+from aiogram.dispatcher import FSMContext
 
 
+###############################
+#        СТАРТ АДМИНКИ
+##############################
 async def cmd_admin_panel(message: types.Message):
     await message.answer('Панель управления Ген подрядчика', reply_markup=kb_admin_panel)
     await StatesAdminUser.start_admin_panel.set()
@@ -23,18 +31,33 @@ async def back_to_admin_panel(message: types.Message, state: FSMContext):
 ######################
 async def get_table(message: types.Message):
     await message.answer('Выгрузка таблицы', reply_markup=kb_get_table_panel)
-    # await StatesAdmin.admin_table_menu.set()
     await StatesAdminUser.get_table.set()
 
 
 async def get_information_companies(message: types.Message):
     await StatesAdminUser.get_info_users.set()
-    companies = ['Первая', 'EST', 'LIIS']
+    companies = CommandsDB.get_all_users()
     for company in companies:
-        await message.answer(f'Наименование: {company} \n Комментарий ПОТОМ ДОБАВЛЮ'
-                             f'\n PIN_CODE: 123124124', reply_markup=edit_company)
+        await message.answer(f'Наименование:  {company.name} \n '
+                             f'Комментарий:  {company.comment}\n'
+                             f'PIN_CODE:  {company.password}',
+                             reply_markup=InlineKeyboardMarkup(row_width=1).insert(
+                                 InlineKeyboardButton(text='Удалить',
+                                                      callback_data=delete_callback.new(name_company=company.name,
+                                                                                        id_company=company.user_id,
+                                                                                        command='del')
+                                                      )))
     await Companies.list_companies.set()
     await message.answer("Информация об организациях. Выберите действие или вернитесь назад", reply_markup=kb_btn_back)
+
+
+@dp.callback_query_handler(delete_callback.filter(command='del'), state=Companies.list_companies)
+async def delete_company(call: CallbackQuery, callback_data: dict):
+    await call.answer(cache_time=60)
+    # Удаляем Пользователя из системы
+    CommandsDB.delete_user_with_id(callback_data.get('id_company'))
+    await call.message.edit_reply_markup(reply_markup=None)
+    await call.message.answer(f'Организация: {callback_data.get("name_company")} удалена')
 
 
 async def add_company_user(message: types.Message):
@@ -50,8 +73,14 @@ async def add_company_user(message: types.Message):
 async def write_company_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['company_name'] = message.text
-    await StatesAdminUser.write_user_name.set()
-    await message.answer('Введите комментарий к компании', reply_markup=kb_btn_back)
+
+    if CommandsDB.get_count(message.text) != 0:
+        await message.answer(f"Пользователь {message.text} уже есть в системе \n"
+                             f"Введите новое имя или нажмите кнопку Назад")
+        await StatesAdminUser.add_user.set()
+    else:
+        await StatesAdminUser.write_user_name.set()
+        await message.answer('Введите комментарий к компании', reply_markup=kb_btn_back)
 
 
 async def write_company_comment(message: types.Message, state: FSMContext):
@@ -60,15 +89,19 @@ async def write_company_comment(message: types.Message, state: FSMContext):
     await StatesAdminUser.write_user_comment.set()
     await message.answer(f'Сохранить компанию?\n'
                          f'Наименование: {data["company_name"]}\n'
-                         f'Комментарий: {data["comment"]}\n'
-                         f'PIN_CODE: 23123123', reply_markup=kb_finish_register_company)
+                         f'Комментарий: {data["comment"]}\n',
+                         reply_markup=kb_finish_register_company)
 
 
 async def save_new_user(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['save'] = True
     await StatesAdminUser.save_user.set()
-    await message.answer(f"Компания\n{data['company_name']}\n{data['comment']}\n Сохранена",
+    CommandsDB.add_user_system(name=data['company_name'],
+                               comment=data['comment'])
+    await message.answer(f"Компания: {data['company_name']}\n"
+                         f"Комментарий: {data['comment']}"
+                         f"\n Сохранена",
                          reply_markup=kb_btn_back_menu)
 
 
