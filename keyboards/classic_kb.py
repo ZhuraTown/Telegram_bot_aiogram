@@ -42,6 +42,19 @@ btn_user_edit_form = KeyboardButton("Просмотреть ранее созд�
 kb_user_panel = ReplyKeyboardMarkup(resize_keyboard=True)
 kb_user_panel.row(btn_user_create_form, btn_user_edit_form, btn_exit)
 
+btn_write_build = KeyboardButton('Добавить Здание')
+btn_select_build = KeyboardButton('Выбрать Здание')
+kb_build_panel = ReplyKeyboardMarkup(resize_keyboard=True)
+kb_build_panel.row(btn_write_build, btn_select_build).row(btn_back)
+
+btn_security = KeyboardButton('Охрана')
+btn_duty = KeyboardButton('Дежурный')
+btn_worker = KeyboardButton('Рабочий')
+btn_itr = KeyboardButton('ИТР')
+btn_skip = KeyboardButton('Пропустить')
+btn_cancel = KeyboardButton('Отменить')
+kb_workers_panel = ReplyKeyboardMarkup(resize_keyboard=True).row(btn_security,btn_duty, btn_worker, btn_itr).add(btn_skip, btn_cancel)
+
 ############################
 #       CREATE_FORM
 ############################
