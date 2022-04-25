@@ -35,3 +35,9 @@ class StatesUsers(StatesGroup):
 
     write_level_build_work = State()
 
+    step_workers = State()
+    write_plan_workers = State()
+    write_actually_workers = State()
+    finish_write_workers = State()
+
+
