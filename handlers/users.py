@@ -5,7 +5,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils.exceptions import MessageNotModified
 
-from create_bot import dp
+from create_bot import dp, bot
 from keyboards.classic_kb import kb_user_panel, kb_form_name_work, kb_btn_back, kb_build_panel, kb_workers_panel
 from memory_FSM.bot_memory import StatesUsers
 from keyboards.inlines_kb.kb_inlines import get_inline_workers_panel, get_panel_attempt_add_users, get_btn_add_users
@@ -84,17 +84,52 @@ async def write_level_build_work(message: types.Message, state: FSMContext):
 
 
 @dp.callback_query_handler(workers_callback.filter(type_step='workers'), state=StatesUsers.step_workers)
-async def select_security(call: CallbackQuery, callback_data: dict):
-    await call.answer(cache_time=60)
-    await call.message.edit_reply_markup(reply_markup=None)
-    await call.message.answer(f"Выбран тип сотрудника: {callback_data['type_worker']}\n"
-                              f"Введите планируемое количество сотрудников")
-    await StatesUsers.write_plan_workers.set()
+async def select_security(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    async with state.proxy() as data:
+        if not data.get(callback_data['type_worker'] + '_план'):
+            data['actual_user'] = callback_data['type_worker']
+            data['actual_user_plan'] = callback_data['type_worker'] + '_план'
+            data[data['actual_user_plan']] = 0
+            await call.answer(cache_time=60)
+            await call.message.edit_reply_markup(reply_markup=None)
+            await call.message.answer(f"Выбран тип сотрудника: {callback_data['type_worker']}\n"
+                                      f"Количество: {0} \n "
+                                      f"Введите планируемое количество сотрудников", reply_markup=get_btn_add_users())
+            await StatesUsers.write_plan_workers.set()
+        else:
+            await bot.answer_callback_query(call.id, text=f'Сотрудник: {data["actual_user"]}, уже выбирался. \n'
+                                                          f'Выберите другого сотрудника!')
+            await StatesUsers.step_workers.set()
+
+
+async def update_number(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        await message.edit_text(f"Выбран тип сотрудника: {data['actual_user']} \n"
+                                f"Количество: {data[data['actual_user_plan']]} \n "
+                                f"Введите планируемое количество сотрудников", reply_markup=get_btn_add_users())
+
+
+@dp.callback_query_handler(add_users.filter(type_btn=['plus', 'minus']), state=[StatesUsers.write_plan_workers, ])
+async def update_number_user(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    async with state.proxy() as data:
+        action = callback_data.get('type_btn')
+        if action == "plus":
+            number = int(callback_data.get('type'))
+            data[data['actual_user_plan']] = data[data['actual_user_plan']] + number
+            await update_number(call.message, state)
+        elif action == 'minus':
+            number = int(callback_data.get('type'))
+            if data[data['actual_user_plan']] - number >= 0:
+                data[data['actual_user_plan']] = data[data['actual_user_plan']] - number
+                await update_number(call.message, state)
+        await call.answer(cache_time=60)
 
 
 async def write_plan_workers(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['workers_plan'] = message.text
+        for key, value in data.items():
+            print(key, value)
     await message.answer('Введите фактическое количество сотрудников')
     await StatesUsers.write_actually_workers.set()
 
@@ -104,6 +139,15 @@ async def write_actually_workers(message: types.Message, state: FSMContext):
         data['workers_actually'] = message.text
     await message.answer("Добавить еще сотрудников?\n", reply_markup=get_panel_attempt_add_users())
     await StatesUsers.finish_write_workers.set()
+
+
+@dp.callback_query_handler(menu_callback.filter(type_btn=['Добавить']), state=StatesUsers.finish_write_workers)
+async def add_new_users(call: CallbackQuery):
+    await StatesUsers.step_workers.set()
+    await call.message.edit_text('Выберите тип добавляемого сотрудника или \n'
+                                 'нажмите кнопку "Пропустить", чтобы продолжить',
+                                 reply_markup=get_inline_workers_panel())
+
 
 # async def write_actually_workers_update(message: types.Message, new_value: list):
 #     with suppress(MessageNotModified):

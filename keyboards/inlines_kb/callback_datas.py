@@ -6,8 +6,7 @@ delete_callback = CallbackData('callback_delete', 'name_company', 'id_company', 
 workers_callback = CallbackData('workers', 'type_step', 'type_worker', 'amount')
 menu_callback = CallbackData('menu_btn', 'btn_menu', 'type_btn')
 
-add_users = CallbackData('add_users', 'type', "type_user")
-minus_users = CallbackData('add_users', 'type', "type_user")
+add_users = CallbackData('add_users', 'type', "type_btn")
 
 none_callback = CallbackData('none_callback', 'none_call')
 
