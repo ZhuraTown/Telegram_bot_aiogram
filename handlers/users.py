@@ -8,7 +8,9 @@ from aiogram.utils.exceptions import MessageNotModified
 from create_bot import dp, bot
 from keyboards.classic_kb import kb_user_panel, kb_form_name_work, kb_btn_back, kb_build_panel, kb_workers_panel
 from memory_FSM.bot_memory import StatesUsers
-from keyboards.inlines_kb.kb_inlines import get_inline_workers_panel, get_panel_attempt_add_users, get_btn_add_users
+from keyboards.inlines_kb.kb_inlines import get_inline_workers_panel, get_panel_attempt_add_users, get_btn_add_users, \
+    save_form_or_add_string, get_main_menu_user_panel, step_select_or_write_name_work, back_to_main_menu_user, \
+    save_name_work, get_names_work, btn_back_menu
 from keyboards.inlines_kb.callback_datas import workers_callback, menu_callback, add_users
 
 
@@ -17,12 +19,14 @@ from keyboards.inlines_kb.callback_datas import workers_callback, menu_callback,
 ########################
 async def cmd_users_panel(message: types.Message):
     await message.delete()
-    await message.answer('Панель управления Подрядчика', reply_markup=kb_user_panel)
+    await message.answer('Панель управления Подрядчика', reply_markup=get_main_menu_user_panel())
     await StatesUsers.start_user_pamel.set()
 
 
-async def back_to_user_panel(message: types.Message, state: FSMContext):
-    await message.answer('Вы вернулись в меню Подрядчика', reply_markup=kb_user_panel)
+@dp.callback_query_handler(menu_callback.filter(type_btn=['Главное меню']),
+                           state=[StatesUsers.create_new_form, StatesUsers.write_name_work])
+async def back_to_user_panel(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text('Вы вернулись в меню Подрядчика', reply_markup=get_main_menu_user_panel())
     await state.reset_state()
     await StatesUsers.start_user_pamel.set()
 
@@ -31,23 +35,41 @@ async def back_to_user_panel(message: types.Message, state: FSMContext):
 #     СОЗДАТЬ ФОРМУ
 ##########################
 
-
-async def create_form(message: types.Message):
-    await message.answer('Заполнение формы \n Выберите следующий шаг', reply_markup=kb_form_name_work)
+@dp.callback_query_handler(menu_callback.filter(type_btn=['Создать форму', 'Назад']),
+                           state=[StatesUsers.start_user_pamel,
+                                  StatesUsers.write_name_work,
+                                  StatesUsers.select_name_work])
+async def create_form(call: CallbackQuery):
     await StatesUsers.create_new_form.set()
+    await call.message.edit_text('Заполнение формы \n Выберите следующий шаг',
+                                 reply_markup=step_select_or_write_name_work())
 
 
-async def add_name_work(message: types.Message):
-    await message.delete()
-    await message.answer('Введите наименование работ', reply_markup=kb_btn_back)
+@dp.callback_query_handler(menu_callback.filter(type_btn=['Добавить работу']),
+                           state=[StatesUsers.create_new_form])
+async def add_name_work(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text('Введите наименование работ', reply_markup=None)
     await StatesUsers.write_name_work.set()
+
+
+@dp.callback_query_handler(menu_callback.filter(type_btn=['Посмотреть формы']),
+                           state=[StatesUsers.create_new_form])
+async def select_name_work(call: CallbackQuery):
+    await call.message.delete()
+    lala = [1,2,3,4,5]
+    for i in lala:
+        await call.message.answer(f'Наименование_{i}', reply_markup=get_names_work(i))
+    await StatesUsers.select_name_work.set()
+    await call.message.answer('Выберите наименование работ для формы', reply_markup=btn_back_menu())
 
 
 async def write_name_work(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['name_work'] = message.text
-    await message.answer('Введите этап', reply_markup=kb_btn_back)
-    await StatesUsers.write_stage_work.set()
+    await message.answer(f'Наименование работы: {data["name_work"]}\n'
+                         f'Добавить?',
+                         reply_markup=save_name_work())
+    # await StatesUsers.write_stage_work.set()
 
 
 ###########################
@@ -62,7 +84,7 @@ async def write_stage_work(message: types.Message, state: FSMContext):
 
 async def step_write_build_work(message: types.Message):
     await StatesUsers.write_build_work.set()
-    await message.answer('Введите наименование здания ПОМЕТОЧКА', reply_markup=kb_btn_back)
+    await message.answer('Введите наименование здания', reply_markup=kb_btn_back)
 
 
 async def write_build_work(message: types.Message, state: FSMContext):
@@ -90,55 +112,107 @@ async def select_security(call: CallbackQuery, callback_data: dict, state: FSMCo
             data['actual_user'] = callback_data['type_worker']
             data['actual_user_plan'] = callback_data['type_worker'] + '_план'
             data[data['actual_user_plan']] = 0
-            await call.answer(cache_time=60)
-            await call.message.edit_reply_markup(reply_markup=None)
-            await call.message.answer(f"Выбран тип сотрудника: {callback_data['type_worker']}\n"
-                                      f"Количество: {0} \n "
-                                      f"Введите планируемое количество сотрудников", reply_markup=get_btn_add_users())
+            await call.answer(cache_time=20)
+            # await call.message.edit_reply_markup(reply_markup=None)
+            await call.message.edit_text(f"Выбран тип сотрудника: {data['actual_user']}\n"
+                                         f"Планируемое количество: 0\n"
+                                         f"Фактическое количество: 0\n"
+                                         f"Введите планируемое количество сотрудников",
+                                         reply_markup=get_btn_add_users())
             await StatesUsers.write_plan_workers.set()
-        else:
-            await bot.answer_callback_query(call.id, text=f'Сотрудник: {data["actual_user"]}, уже выбирался. \n'
-                                                          f'Выберите другого сотрудника!')
-            await StatesUsers.step_workers.set()
 
 
-async def update_number(message: types.Message, state: FSMContext):
+async def update_number_plan(message: types.Message, state: FSMContext, new_value: int):
     async with state.proxy() as data:
-        await message.edit_text(f"Выбран тип сотрудника: {data['actual_user']} \n"
-                                f"Количество: {data[data['actual_user_plan']]} \n "
+        await message.edit_text(f"Выбран тип сотрудника: {data['actual_user']}\n"
+                                f"Планируемое количество: {new_value}\n"
+                                f"Фактическое количество: 0\n"
                                 f"Введите планируемое количество сотрудников", reply_markup=get_btn_add_users())
+        await StatesUsers.write_plan_workers.set()
 
 
-@dp.callback_query_handler(add_users.filter(type_btn=['plus', 'minus']), state=[StatesUsers.write_plan_workers, ])
-async def update_number_user(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
+async def update_number_actually(message: types.Message, state: FSMContext, new_value: int):
+    async with state.proxy() as data:
+        await message.edit_text(f"Выбран тип сотрудника: {data['actual_user']}\n"
+                                f"Планируемое количество: {data[data['actual_user_plan']]}\n"
+                                f"Фактическое количество: {new_value}\n"
+                                f"Введите фактическое количество сотрудников", reply_markup=get_btn_add_users())
+        await StatesUsers.write_actually_workers.set()
+
+
+@dp.callback_query_handler(add_users.filter(type_btn=['plus', 'minus']),
+                           state=[StatesUsers.write_plan_workers, StatesUsers.step_workers])
+async def write_plan_user(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
     async with state.proxy() as data:
         action = callback_data.get('type_btn')
         if action == "plus":
             number = int(callback_data.get('type'))
             data[data['actual_user_plan']] = data[data['actual_user_plan']] + number
-            await update_number(call.message, state)
+            await update_number_plan(call.message, state, data[data['actual_user_plan']])
         elif action == 'minus':
             number = int(callback_data.get('type'))
-            if data[data['actual_user_plan']] - number >= 0:
-                data[data['actual_user_plan']] = data[data['actual_user_plan']] - number
-                await update_number(call.message, state)
-        await call.answer(cache_time=60)
+            data_number = data[data['actual_user_plan']]
+            if data_number - number >= 0:
+                data[data['actual_user_plan']] = data_number - number
+                await update_number_plan(call.message, state, data[data['actual_user_plan']])
+            else:
+                await call.answer(cache_time=1)
 
 
-async def write_plan_workers(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(add_users.filter(type_btn=['plus', 'minus']),
+                           state=[StatesUsers.write_actually_workers])
+async def write_actually_user(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
     async with state.proxy() as data:
-        data['workers_plan'] = message.text
-        for key, value in data.items():
-            print(key, value)
-    await message.answer('Введите фактическое количество сотрудников')
+        action = callback_data.get('type_btn')
+        if action == "plus":
+            number = int(callback_data.get('type'))
+            data[data['actual_user_actually']] = data[data['actual_user_actually']] + number
+            await update_number_actually(call.message, state, data[data['actual_user_actually']])
+        elif action == 'minus':
+            number = int(callback_data.get('type'))
+            data_number = data[data['actual_user_actually']]
+            if data_number - number >= 0:
+                data[data['actual_user_actually']] = data_number - number
+                await update_number_actually(call.message, state, data[data['actual_user_actually']])
+            else:
+                await call.answer(cache_time=1)
+
+
+@dp.callback_query_handler(add_users.filter(type_btn=['Подтвердить']),
+                           state=[StatesUsers.write_plan_workers])
+async def write_actually_user(call: CallbackQuery, callback_data: dict, state: FSMContext):
     await StatesUsers.write_actually_workers.set()
-
-
-async def write_actually_workers(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        data['workers_actually'] = message.text
-    await message.answer("Добавить еще сотрудников?\n", reply_markup=get_panel_attempt_add_users())
-    await StatesUsers.finish_write_workers.set()
+        data['actual_user_actually'] = data['actual_user'] + '_актуально'
+        data[data['actual_user_actually']] = 0
+        await call.answer(cache_time=1)
+        await call.message.edit_text(f"Выбран тип сотрудника: {data['actual_user']}\n"
+                                     f"Планируемое количество: {data[data['actual_user_plan']]}\n"
+                                     f"Фактическое количество: {0}\n"
+                                     f"Введите фактическое количество сотрудников", reply_markup=get_btn_add_users())
+
+
+# async def write_plan_workers(message: types.Message, state: FSMContext):
+#     async with state.proxy() as data:
+#         data['workers_plan'] = message.text
+#         for key, value in data.items():
+#             print(key, value)
+#     await message.answer('Введите фактическое количество сотрудников')
+#     await StatesUsers.write_actually_workers.set()
+
+@dp.callback_query_handler(add_users.filter(type_btn=['access']),
+                           state=[StatesUsers.write_actually_workers])
+async def write_actually_workers(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        await call.message.edit_text(f"Выбран тип сотрудника: {data['actual_user']}\n"
+                                     f"Планируемое количество: {data[data['actual_user_plan']]}\n"
+                                     f"Фактическое количество: {data[data['actual_user_actually']]}\n",
+                                     reply_markup=None)
+        await call.message.answer("Добавить еще сотрудников?\n", reply_markup=get_panel_attempt_add_users())
+        await StatesUsers.finish_write_workers.set()
+
+
+
 
 
 @dp.callback_query_handler(menu_callback.filter(type_btn=['Добавить']), state=StatesUsers.finish_write_workers)
@@ -148,6 +222,13 @@ async def add_new_users(call: CallbackQuery):
                                  'нажмите кнопку "Пропустить", чтобы продолжить',
                                  reply_markup=get_inline_workers_panel())
 
+
+@dp.callback_query_handler(menu_callback.filter(type_btn=['Продолжить', 'Пропустить']),
+                           state=[StatesUsers.finish_write_workers, StatesUsers.step_workers])
+async def next_step(call: CallbackQuery):
+    await StatesUsers.step_workers.set()
+    await call.message.edit_text('Сохранить форму, или добавить новую строку? \n',
+                                 reply_markup=save_form_or_add_string())
 
 # async def write_actually_workers_update(message: types.Message, new_value: list):
 #     with suppress(MessageNotModified):
@@ -178,7 +259,11 @@ async def add_new_users(call: CallbackQuery):
 
 # @dp.callback_query_handler(menu_callback.filter(type_btn='Добавить'), state=StatesUsers.finish_write_workers)
 # async def add_new_user()
-
+# async def write_actually_workers(message: types.Message, state: FSMContext):
+#     async with state.proxy() as data:
+#         data['workers_actually'] = message.text
+#     await message.answer("Добавить еще сотрудников?\n", reply_markup=get_panel_attempt_add_users())
+#     await StatesUsers.finish_write_workers.set()
 
 async def select_build_work(message: types.Message):
     builds = ['Здание1', 'Здание2']
@@ -230,11 +315,9 @@ def register_handlers_users(dp: Dispatcher):
     dp.register_message_handler(write_stage_work, state=StatesUsers.write_stage_work)
     dp.register_message_handler(write_build_work, state=StatesUsers.write_build_work)
     dp.register_message_handler(write_level_build_work, state=StatesUsers.write_level_build_work)
-    dp.register_message_handler(write_plan_workers, state=StatesUsers.write_plan_workers)
+    # dp.register_message_handler(write_plan_workers, state=StatesUsers.write_plan_workers)
     dp.register_message_handler(write_actually_workers, state=StatesUsers.write_actually_workers)
 
     dp.register_message_handler(choice_name_work, lambda message: 'Выбрать наименование работ' in message.text,
                                 state=StatesUsers.create_new_form)
 
-    # dp.register_message_handler(write_name_work, lambda message: 'Введите наименование работ' in message.text)
-    # dp.register_message_handler(choice_name_work, lambda message: 'Выбрать наименование работ' in message.text)
