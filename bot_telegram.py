@@ -1,6 +1,7 @@
 from create_bot import bot, dp
 from aiogram import executor
 
+from data_base.db_commands import CommandsDB
 from handlers.users import register_handlers_users
 from handlers.admin import register_handlers_admin
 from handlers.start_work import register_handlers_start_work
@@ -8,6 +9,7 @@ from handlers.start_work import register_handlers_start_work
 
 async def on_startup(_):
     print('Бот запущен')
+    CommandsDB.create_db()
 
 
 async def shutdown(dp):

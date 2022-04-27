@@ -27,6 +27,7 @@ class StatesUsers(StatesGroup):
     write_name_work = State()
     select_name_work = State()
 
+    step_stage_work = State()
     write_stage_work = State()
 
     build_work = State()

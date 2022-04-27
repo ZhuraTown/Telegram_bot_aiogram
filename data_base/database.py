@@ -14,5 +14,4 @@ session = scoped_session(session)
 
 connect = engine.connect()
 
-base.metadata.create_all(engine)
 

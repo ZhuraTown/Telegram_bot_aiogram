@@ -2,11 +2,17 @@ from random import randint
 from sqlalchemy import distinct, func
 from data_base.database import session
 
-from .models import User
+from .models import User, TableNameWork, base, engine, TableNameBuild
 
 
 class CommandsDB:
+    @staticmethod
+    def create_db():
+        base.metadata.create_all(engine)
 
+    ##############################
+    #       ПОЛЬЗОВАТЕЛИ
+    ##############################
     @staticmethod
     def get_user_with_name(name):
         my_query = session.query(User.name, User.user_id).filter(User.name == name).all()
@@ -65,4 +71,78 @@ class CommandsDB:
 
     @staticmethod
     def get_count(name):
-        return session.query(User.name).filter(User.name == name).count()
+        return session.query(TableNameWork.name_work).filter(TableNameWork.name_work == name).count()
+
+    #################################
+    #      НАИМЕНОВАНИЯ РАБОТ
+    ################################
+    @staticmethod
+    def add_name_work(name):
+        try:
+            if session.query(TableNameWork.name_work).filter(TableNameWork.name_work == name).count() == 0:
+                session.add(TableNameWork(name_work=name))
+                session.flush()
+                return True
+            else:
+                return False
+        except:
+            session.rollback()
+            print(f'Ошибка записи {name} в БД')
+        finally:
+            session.commit()
+
+    @staticmethod
+    def del_name_work(name):
+        try:
+            session.query(TableNameWork).filter(TableNameWork.name_work == name).delete()
+            session.flush()
+            print(f"Удаление работы с наименованием успешно {name}")
+            return True
+        except:
+            session.rollback()
+            print(f'Ошибка работы с наименованием {name} из БД')
+            return False
+        finally:
+            session.commit()
+
+    @staticmethod
+    def get_all_names_work():
+        rows = session.query(TableNameWork.work_name_id, TableNameWork.name_work).all()
+        return rows
+
+    ##################################
+    #             ЗДАНИЯ
+    #################################
+    @staticmethod
+    def add_name_build(name):
+        try:
+            if session.query(TableNameBuild.name_build).filter(TableNameBuild.name_build == name).count() == 0:
+                session.add(TableNameBuild(name_build=name))
+                session.flush()
+                return True
+            else:
+                return False
+        except:
+            session.rollback()
+            print(f'Ошибка записи {name} в БД')
+        finally:
+            session.commit()
+
+    @staticmethod
+    def del_name_build(name):
+        try:
+            session.query(TableNameBuild).filter(TableNameBuild.name_build == name).delete()
+            session.flush()
+            print(f"Удаление {name} успешно")
+            return True
+        except:
+            session.rollback()
+            print(f'Ошибка удаления {name} из БД')
+            return False
+        finally:
+            session.commit()
+
+    @staticmethod
+    def get_all_names_builds():
+        rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build).all()
+        return rows
