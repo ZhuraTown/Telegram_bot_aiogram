@@ -1,7 +1,166 @@
 from aiogram.utils.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from .callback_datas import workers_callback, menu_callback, add_users, none_callback, names_work
+from .callback_datas import workers_callback, menu_callback, add_users, none_callback, names_work, menu_callback_user, \
+    btn_names_msg, workers
 
+
+class KBLines:
+
+    @staticmethod
+    def get_start_panel_btn():
+        btn_create_form = InlineKeyboardButton(text='Создать форму', callback_data=menu_callback_user.new(
+            step_menu='Step_MAIN', name_btn='Создать форму'
+        ))
+        btn_get_forms = InlineKeyboardButton(text='Посмотреть созданные формы', callback_data=menu_callback_user.new(
+            step_menu='Step_MAIN', name_btn='Посмотреть формы'
+        ))
+        btn_exit = InlineKeyboardButton(text='Выйти', callback_data=menu_callback_user.new(
+            step_menu='Step_MAIN', name_btn='Выйти'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_create_form).row(btn_get_forms).row(btn_exit)
+
+    @staticmethod
+    def step_name_work():
+        btn_add_name_work = InlineKeyboardButton(text='Добавить наименование работ', callback_data=menu_callback_user.new(
+            step_menu='Step_NAME', name_btn='Добавить имя'
+        ))
+        btn_get_names_work = InlineKeyboardButton(text='Выбрать наименование работ', callback_data=menu_callback_user.new(
+            step_menu='Step_NAME', name_btn='Посмотреть'
+        ))
+        btn_exit = InlineKeyboardButton(text='Главное меню', callback_data=menu_callback_user.new(
+            step_menu='Step_NAME', name_btn='Главное'
+        ))
+        return InlineKeyboardMarkup(row_width=3).row(btn_add_name_work).row(btn_get_names_work).row(btn_exit)
+
+    @staticmethod
+    def step_build_work(name_step):
+        btn_add_name_work = InlineKeyboardButton(text='Добавить здание', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Добавить здание'
+        ))
+        btn_get_names_work = InlineKeyboardButton(text='Выбрать здание', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Посмотреть здания'
+        ))
+        btn_exit = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_add_name_work).row(btn_get_names_work).row(btn_exit)
+
+    @staticmethod
+    def save_name(step_name):
+        btn_save = InlineKeyboardButton(text='Добавить', callback_data=menu_callback_user.new(
+            step_menu=f'{step_name}', name_btn='Добавить'
+        ))
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{step_name}', name_btn='Назад'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_save).row(btn_back)
+
+    @staticmethod
+    def get_names_one_msg(step_menu: str,
+                          names_work_from_db: list):
+        kb_inline = InlineKeyboardMarkup(row_width=4)
+        for name in names_work_from_db:
+            btn_name_work = InlineKeyboardButton(text=f'{name}', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{name}', name_btn='Имя'))
+            btn_select = InlineKeyboardButton(text='Выбрать', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{name}', name_btn='Выбрать'
+            ))
+            btn_del = InlineKeyboardButton(text='Удалить', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{name}', name_btn='Удалить'
+            ))
+            kb_inline.row(btn_name_work, btn_select, btn_del)
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{step_menu}', name_btn='Назад'
+        ))
+        kb_inline.row(btn_back)
+        return kb_inline
+
+    @staticmethod
+    def btn_back(name_step):
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_back)
+
+    @staticmethod
+    def btn_next_or_back(name_step):
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'
+        ))
+        btn_next = InlineKeyboardButton(text='Продолжить', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Продолжить'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_next).row(btn_back)
+
+    @staticmethod
+    def get_kb_stage(name_step):
+        btn_write_stage = InlineKeyboardButton(text='Ввести этап', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Ввести этап'
+        ))
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_write_stage).row(btn_back)
+
+    @staticmethod
+    def get_kb_level(name_step):
+        btn_write_stage = InlineKeyboardButton(text='Ввести этаж', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Ввести этаж'
+        ))
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_write_stage).row(btn_back)
+
+    @staticmethod
+    def get_kb_workers(name_step):
+        btn_write_stage = InlineKeyboardButton(text='Добавить сотрудника', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Сотрудник'
+        ))
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_write_stage).row(btn_back)
+
+    @staticmethod
+    def get_workers_menu(name_step):
+        # btn_sec = InlineKeyboardButton(text='Охрана', callback_data=workers.new(
+        #     step_menu=f'{name_step}', name='Охрана'
+        # ))
+        # btn_duty = InlineKeyboardButton(text='Дежурный', callback_data=workers.new(
+        #     step_menu=f'{name_step}', name='Дежурный'
+        # ))
+        # btn_worker = InlineKeyboardButton(text='Рабочий', callback_data=workers.new(
+        #     step_menu=f'{name_step}', name='Рабочий'
+        # ))
+        # btn_itr = InlineKeyboardButton(text='ИТР', callback_data=workers.new(
+        #     step_menu=f'{name_step}', name='ИТР'
+        # ))
+        inline_kb = InlineKeyboardMarkup(row_width=3)
+        workers_list = ['Охрана', 'Дежурный', 'Рабочий', 'ИТР']
+        for worker in workers_list:
+            btn_worker = InlineKeyboardButton(text=f'{worker}', callback_data=workers.new(
+                step_menu=f'{name_step}', name=f'{worker}', name_btn='Имя'
+            ))
+            btn_select = InlineKeyboardButton(text='Выбрать', callback_data=workers.new(
+                step_menu=f'{name_step}',  name=f'{worker}', name_btn='Выбрать'
+            ))
+            inline_kb.row(btn_worker, btn_select)
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'
+        ))
+        inline_kb.row(btn_back)
+        return inline_kb
+
+    @staticmethod
+    def add_new_worker(name_step):
+        btn_write_stage = InlineKeyboardButton(text='Добавить', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Добавить'
+        ))
+        btn_back = InlineKeyboardButton(text='Продолжить', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Продолжить'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_write_stage).row(btn_back)
 
 ###################################################
 #     ДОБАВЛЕНИЕ ПОЛЬЗОВАТЕЛЕЙ
@@ -82,7 +241,7 @@ def get_btn_add_users():
 ###############################
 #       ГЛАВОЕ МЕНЮ НАЧАЛО
 ###############################
-def save_form_or_add_string():
+def save_form_or_add_string(step_):
     btn_save_form = InlineKeyboardButton(text='Сохранить форму', callback_data=menu_callback.new(
         btn_menu='save_form', type_btn='Сохранить форму'
     ))

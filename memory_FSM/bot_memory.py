@@ -20,25 +20,27 @@ class Companies(StatesGroup):
 
 
 class StatesUsers(StatesGroup):
-    start_user_pamel = State()
+    start_user_pamel = State()  # Начало работы, главное меню
 
-    create_new_form = State()
+    create_new_form = State()  # Создать форму
+    get_forms = State()  # Просмотреть форму
 
-    write_name_work = State()
-    select_name_work = State()
+    step_name_work = State()  # Шаг Наименования работ
+    write_name_work = State()  # Добавить наименование работ
+    select_name_work = State()  # Выбрать наименование работ
 
-    step_stage_work = State()
-    write_stage_work = State()
+    step_stage_work = State()  # Этап
+    write_stage_work = State()  # Ввести этап работы
 
-    build_work = State()
-    write_build_work = State()
-    select_build_work = State()
+    step_build_work = State()  # Здания
+    write_build_work = State()  # Ввести наименование здания
+    select_build_work = State()  # Выбрать наименование здания
 
-    write_level_build_work = State()
+    step_level_build_work = State()  # Этаж
+    write_level_build_work = State()  # Ввести этаж
 
-    step_workers = State()
+    step_workers = State()  # Сотрудники
+    select_plan_workers = State()
     write_plan_workers = State()
     write_actually_workers = State()
     finish_write_workers = State()
-
-
