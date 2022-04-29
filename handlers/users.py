@@ -5,10 +5,8 @@ from aiogram.types import CallbackQuery
 from create_bot import dp, bot
 from data_base.db_commands import CommandsDB
 from keyboards.classic_kb import kb_btn_back
-from keyboards.inlines_kb.callback_datas import workers_callback, menu_callback, add_users, menu_callback_user, \
-    btn_names_msg, workers
-from keyboards.inlines_kb.kb_inlines import KBLines, get_inline_workers_panel, get_panel_attempt_add_users, \
-    get_btn_add_users, save_form_or_add_string
+from keyboards.inlines_kb.callback_datas import menu_callback, menu_callback_user, btn_names_msg, workers
+from keyboards.inlines_kb.kb_inlines import KBLines, save_form_or_add_string
 from memory_FSM.bot_memory import StatesUsers
 
 
@@ -350,8 +348,8 @@ async def write_level_build_work(message: types.Message, state: FSMContext):
 ##############################################
 #             ВЫБОР СОТРУДНИКОВ
 #############################################
-@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить',],
-                                                     step_menu=['W_LEVEL',]),
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить', ],
+                                                     step_menu=['W_LEVEL', ]),
                            state=[StatesUsers.write_level_build_work, ], )
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад', 'Добавить'],
                                                      step_menu=['SEL_WORKER', 'F_WORKERS']),
@@ -362,10 +360,10 @@ async def step_workers(call: CallbackQuery, state: FSMContext):
         if "workers" not in data:
             data['workers'] = {}
 
-        text_msg = f'|     {"<b>"}Форма{"</b>"}\n'\
-                   f'|Наименование работ: {"<b>"}{data["name_work"]}{"</b>"}\n'\
-                   f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n'\
-                   f'|Здание: {"<b>"}{data["name_build"]}{"</b>"}\n'\
+        text_msg = f'|     {"<b>"}Форма{"</b>"}\n' \
+                   f'|Наименование работ: {"<b>"}{data["name_work"]}{"</b>"}\n' \
+                   f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n' \
+                   f'|Здание: {"<b>"}{data["name_build"]}{"</b>"}\n' \
                    f'|Этаж: {"<b>"}{data["level"]}{"</b>"}\n' \
                    f'--------------------------------\n'
 
@@ -375,7 +373,7 @@ async def step_workers(call: CallbackQuery, state: FSMContext):
                                          reply_markup=KBLines.get_kb_workers('WORKERS'), parse_mode='HTML')
         else:
             text_msg = text_msg + 'Сотрудники (План/Факт) \n' \
-                       '--------------------------------\n'
+                                  '--------------------------------\n'
             for worker, count in data['workers'].items():
                 text_msg = text_msg + f'{"<b>"}{worker} : ({count[0]}/{0 if count[1] is None else count[1]}{"</b>"})\n'
             await call.message.edit_text(text=text_msg + text_end,
@@ -395,12 +393,11 @@ async def select_worker_plan(call: CallbackQuery):
 
 @dp.callback_query_handler(workers.filter(name_btn=['Выбрать', 'Имя'],
                                           step_menu=['SEL_WORKER']),
-                           state=[StatesUsers.select_plan_workers, StatesUsers.write_plan_workers,], )
+                           state=[StatesUsers.select_plan_workers, StatesUsers.write_plan_workers, ], )
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
                                                      step_menu=['W_ACTUAL_WORKERS', 'W_PLAN_WORKERS']),
                            state=[StatesUsers.finish_write_workers, StatesUsers.write_actually_workers], )
 async def select_worker_for_plan(call: CallbackQuery, callback_data: dict, state: FSMContext):
-
     if callback_data.get('name_btn') == 'Имя':
         await call.answer(cache_time=1)
     elif callback_data.get('name_btn') == 'Выбрать':
@@ -431,7 +428,6 @@ async def select_write_worker_plan(call: CallbackQuery, state: FSMContext):
 
 
 async def write_worker_plan(message: types.Message, state: FSMContext):
-
     if message.text.isdigit():
         async with state.proxy() as data:
             if data['actual_worker'] not in data['workers']:
@@ -473,9 +469,10 @@ async def write_worker_actually(message: types.Message, state: FSMContext):
         await message.answer(f"Нужно ввести только число \n"
                              f"{message.text} не число!")
 
-@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
-                                                     step_menu=['W_ACTUAL_WORKERS']),
-                           state=[StatesUsers.finish_write_workers], )
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить', 'Назад'],
+                                                     step_menu=['W_ACTUAL_WORKERS', 'S_A_FORM']),
+                           state=[StatesUsers.finish_write_workers,StatesUsers.step_save_or_add_string], )
 async def select_write_worker_actually(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         text_msg = 'Сотрудники (План/Факт) \n' \
@@ -488,25 +485,33 @@ async def select_write_worker_actually(call: CallbackQuery, state: FSMContext):
                                      parse_mode='HTML')
         await StatesUsers.finish_write_workers.set()
 
-#####################################
-#   sdf
-####################################
+
+########################################
+#   СОХРАНИТЬ ФОРМУ/ ДОБАВИТЬ СТРОКУ
+########################################
 
 
-@dp.callback_query_handler(menu_callback.filter(type_btn=['Добавить']), state=StatesUsers.finish_write_workers)
-async def add_new_users(call: CallbackQuery):
-    await StatesUsers.step_workers.set()
-    await call.message.edit_text('Выберите тип добавляемого сотрудника или \n'
-                                 'нажмите кнопку "Пропустить", чтобы продолжить',
-                                 reply_markup=get_inline_workers_panel())
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить', ],
+                                                     step_menu=['F_WORKERS']),
+                           state=[StatesUsers.finish_write_workers])
+async def save_or_add_string(call: CallbackQuery, state: FSMContext):
+    await StatesUsers.step_save_or_add_string.set()
+    async with state.proxy() as data:
+        text_msg = f'|     {"<b>"}Форма{"</b>"}\n' \
+                   f'|Наименование работ: {"<b>"}{data["name_work"]}{"</b>"}\n' \
+                   f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n' \
+                   f'|Здание: {"<b>"}{data["name_build"]}{"</b>"}\n' \
+                   f'|Этаж: {"<b>"}{data["level"]}{"</b>"}\n' \
+                   f'--------------------------------\n'
 
+        text_msg = text_msg + 'Сотрудники (План/Факт) \n' \
+                              '--------------------------------\n'
+        text_end = f'Сохранить {"<b>"}форму{"</b>"} или добавить {"<b>"}новую строку{"</b>"}?'
+        for worker, count in data['workers'].items():
+            text_msg = text_msg + f'{"<b>"}{worker} : ({count[0]}/{0 if count[1] is None else count[1]}{"</b>"})\n'
 
-@dp.callback_query_handler(menu_callback.filter(type_btn=['Продолжить', 'Пропустить']),
-                           state=[StatesUsers.finish_write_workers, StatesUsers.step_workers])
-async def next_step(call: CallbackQuery):
-    await StatesUsers.step_workers.set()
-    await call.message.edit_text('Сохранить форму, или добавить новую строку? \n',
-                                 reply_markup=save_form_or_add_string())
+        await call.message.edit_text(text=text_msg + text_end,
+                                     reply_markup=KBLines.save_or_add_string('S_A_FORM'), parse_mode='HTML')
 
 
 def register_handlers_users(dp: Dispatcher):
@@ -521,11 +526,6 @@ def register_handlers_users(dp: Dispatcher):
 
                                        ])
     dp.register_message_handler(cmd_users_panel, lambda message: 'Подрядчики' in message.text)
-    dp.register_message_handler(create_form, lambda message: 'Создать форму' in message.text,
-                                state=StatesUsers.start_user_pamel)
-
-    dp.register_message_handler(select_build_work, lambda message: 'Выбрать Здание' in message.text,
-                                state=StatesUsers.step_build_work)
 
     dp.register_message_handler(write_name_work, state=StatesUsers.write_name_work)
     dp.register_message_handler(write_stage_work, state=StatesUsers.write_stage_work)

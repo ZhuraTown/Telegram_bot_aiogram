@@ -40,7 +40,13 @@ class StatesUsers(StatesGroup):
     write_level_build_work = State()  # Ввести этаж
 
     step_workers = State()  # Сотрудники
-    select_plan_workers = State()
-    write_plan_workers = State()
-    write_actually_workers = State()
-    finish_write_workers = State()
+    select_plan_workers = State()  # Выбор типа сотрудника
+    write_plan_workers = State()  # Ввести количество сотрудников ПЛАН
+    write_actually_workers = State()  # Ввести количество сотрудников ФАКТ
+    finish_write_workers = State()  # Добавить сотрудников/ Продолжить
+
+    step_save_or_add_string = State()
+    save_form = State()
+    add_sting = State()
+
+
