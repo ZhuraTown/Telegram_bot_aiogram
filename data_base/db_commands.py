@@ -92,15 +92,15 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def del_name_work(name):
+    def del_name_work(id_name):
         try:
-            session.query(TableNameWork).filter(TableNameWork.name_work == name).delete()
+            session.query(TableNameWork).filter(TableNameWork.work_name_id == id_name).delete()
             session.flush()
-            print(f"Удаление работы с наименованием успешно {name}")
+            print(f"Удаление работы с ID {id_name} успешно")
             return True
         except:
             session.rollback()
-            print(f'Ошибка работы с наименованием {name} из БД')
+            print(f'Ошибка работы с наименованием {id_name} из БД')
             return False
         finally:
             session.commit()
@@ -109,6 +109,11 @@ class CommandsDB:
     def get_all_names_work():
         rows = session.query(TableNameWork.work_name_id, TableNameWork.name_work).all()
         return rows
+
+    @staticmethod
+    def get_name_work_for_id(id_name):
+        row = session.query(TableNameWork.name_work).filter(TableNameWork.work_name_id == id_name).one()
+        return row[0]
 
     ##################################
     #             ЗДАНИЯ
