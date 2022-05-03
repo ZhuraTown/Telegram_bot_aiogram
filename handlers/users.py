@@ -1,5 +1,5 @@
 import copy
-import emoji
+import json
 
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -141,8 +141,6 @@ async def accept_del_name_work(call: CallbackQuery, callback_data: dict, state: 
     async with state.proxy() as data:
         name_work_id = data['id_name_work_del']
         name_work = data['name_work_del']
-        print(name_work)
-        print(name_work_id)
         if CommandsDB.del_name_work(name_work_id):
             await bot.answer_callback_query(call.id,
                                             text=f'Наименование работы:{name_work},\n'
@@ -191,21 +189,35 @@ async def select_name_work(call: CallbackQuery, callback_data: dict, state: FSMC
 #                   ЭТАПЫ
 ################################################
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
+                                                     step_menu=['ADD_S_FORM']),
+                           state=[StatesUsers.add_string], )
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
                                                      step_menu=['SEL_NAME']),
                            state=[StatesUsers.step_stage_work, StatesUsers.write_stage_work], )
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
                                                      step_menu=['W_STAGE', 'BUILD']),
                            state=[StatesUsers.step_stage_work, StatesUsers.write_stage_work,
                                   StatesUsers.step_build_work], )
-async def step_stage(call: CallbackQuery, state: FSMContext):
+async def step_stage(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await StatesUsers.step_stage_work.set()
     async with state.proxy() as data:
         name_work = data['name_work']
-    await call.message.edit_text(f'|     {"<b>"}Форма{"</b>"}      \n'
-                                 f'|Наименование работ: {"<b>"}{name_work}{"</b>"}\n'
-                                 f'--------------------------------\n'
-                                 f'Введите этап работы.',
-                                 reply_markup=KBLines.get_kb_stage('STAGE'), parse_mode='HTML')
+        if callback_data.get('step_menu') == "ADD_S_FORM":
+            # Очищаю словарь, от старых данных
+            names_for_clean = ['name_stage', 'name_build', 'level', 'workers', 'actual_worker']
+            for name_string in names_for_clean:
+                del data[name_string]
+            await call.message.edit_text(f'|     {"<b>"}Форма{"</b>"}      \n'
+                                         f'|Наименование работ: {"<b>"}{name_work}{"</b>"}\n'
+                                         f'--------------------------------\n'
+                                         f'Введите этап работы для новой строки.',
+                                         reply_markup=KBLines.get_kb_stage('STAGE'), parse_mode='HTML')
+        else:
+            await call.message.edit_text(f'|     {"<b>"}Форма{"</b>"}      \n'
+                                         f'|Наименование работ: {"<b>"}{name_work}{"</b>"}\n'
+                                         f'--------------------------------\n'
+                                         f'Введите этап работы.',
+                                         reply_markup=KBLines.get_kb_stage('STAGE'), parse_mode='HTML')
 
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Ввести этап'],
@@ -534,8 +546,8 @@ async def select_write_worker_actually(call: CallbackQuery, state: FSMContext):
                                                      step_menu=['F_WORKERS', ]),
                            state=[StatesUsers.finish_write_workers, StatesUsers.save_form])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=["Назад"],
-                                                     step_menu=['SAVE_FORM', ]),
-                           state=[StatesUsers.save_form])
+                                                     step_menu=['SAVE_FORM', 'ADD_S_FORM']),
+                           state=[StatesUsers.save_form, StatesUsers.add_string])
 async def save_or_add_string(call: CallbackQuery, state: FSMContext):
     await StatesUsers.step_save_or_add_string.set()
     async with state.proxy() as data:
@@ -560,10 +572,6 @@ async def save_or_add_string(call: CallbackQuery, state: FSMContext):
         else:
             data['string'] = data['string'] + 1
             data[data['string']] = copy.deepcopy(dict(data))
-        # # Очищаю словарь, для новых значений и корректного отображения данных
-        # names_for_clean = ['name_work', 'name_stage', 'name_build', 'level', 'workers', 'actual_worker']
-        # for name_string in names_for_clean:
-        #     del data[name_string]
 
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Сохранить', ],
@@ -574,6 +582,19 @@ async def save_form(call: CallbackQuery, state: FSMContext):
         await StatesUsers.save_form.set()
         await call.message.edit_text(text='Сохранить форму?',
                                      reply_markup=KBLines.btn_next_or_back('SAVE_FORM'), parse_mode='HTML')
+
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить', ],
+                                                     step_menu=['S_A_FORM']),
+                           state=[StatesUsers.step_save_or_add_string])
+async def save_form(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        await StatesUsers.add_string.set()
+        await call.message.edit_text(text='Добавить строчку в форму?',
+                                     reply_markup=KBLines.btn_next_or_back('ADD_S_FORM'), parse_mode='HTML')
+
+        for el, val in data.items():
+            print(el, '   ', val)
 
 
 def register_handlers_users(dp: Dispatcher):

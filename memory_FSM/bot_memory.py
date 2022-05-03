@@ -45,8 +45,8 @@ class StatesUsers(StatesGroup):
     write_actually_workers = State()  # Ввести количество сотрудников ФАКТ
     finish_write_workers = State()  # Добавить сотрудников/ Продолжить
 
-    step_save_or_add_string = State()
-    save_form = State()
-    add_sting = State()
+    step_save_or_add_string = State()  # Создание/добавление(строки) формы
+    save_form = State()  # Сохранить форму
+    add_string = State()  #  Добавить строку
 
 
