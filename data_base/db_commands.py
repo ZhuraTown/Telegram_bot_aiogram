@@ -19,17 +19,21 @@ class CommandsDB:
         return my_query
 
     @staticmethod
-    def get_all_users():
-        rows = session.query(User.user_id, User.name, User.comment, User.password).all()
+    def get_all_users(user_password=False) -> list or dict:
+        if not user_password:
+            rows = session.query(User.user_id, User.name, User.comment, User.password, User.admin).all()
+        else:
+            rows = {user[1]: [user[0], user[2]] for user in session.query(User.name, User.password, User.admin).all()}
         return rows
 
     @staticmethod
-    def add_user_system(name, comment):
+    def add_user_system(name, comment, password=None, admin=False):
         try:
             if session.query(User.name).filter(User.name == name).count() == 0:
                 session.add(User(name=name,
-                                 password=f'{randint(1000, 9999)}',
-                                 comment=comment))
+                                 password=str(password) if password else f'{randint(1000, 9999)}',
+                                 comment=comment,
+                                 admin=admin))
                 session.flush()
             else:
                 print(f"Пользователь с именем {name}, уже есть в БД")
@@ -40,8 +44,36 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def update_user_with_name(name, new_name):
-        session.query(User).filter(User.name == name).update({"name": new_name})
+    def update_name_user_with_name(name, new_name):
+        try:
+            session.query(User).filter(User.name == name).update({"name": new_name})
+            session.flush()
+            print('Пользователь успешно изменён')
+            return True
+        except:
+            session.rollback()
+            print('Что-то пошло не так. Изменить пользователя не удалось')
+            return False
+        finally:
+            session.commit()
+
+    @staticmethod
+    def get_password_user_with_name(name):
+        return session.query(User.password).filter(User.name == name).one()[0]
+
+    @staticmethod
+    def update_pincode_user_with_name(name, new_pin):
+        try:
+            session.query(User).filter(User.name == name).update({"password": new_pin})
+            session.flush()
+            print('Пользователь успешно изменён')
+            return True
+        except:
+            session.rollback()
+            print('Что-то пошло не так. Изменить пользователя не удалось')
+            return False
+        finally:
+            session.commit()
 
     @staticmethod
     def delete_user_with_name(name):

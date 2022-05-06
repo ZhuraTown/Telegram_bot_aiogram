@@ -1,25 +1,40 @@
-import copy
-import json
-
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 
 from create_bot import dp, bot
 from data_base.db_commands import CommandsDB
-from keyboards.classic_kb import kb_btn_back
+from keyboards.classic_kb import kb_btn_back, kb_start
 from keyboards.inlines_kb.callback_datas import menu_callback_user, btn_names_msg, workers
 from keyboards.inlines_kb.kb_inlines import KBLines
-from memory_FSM.bot_memory import StatesUsers
+from memory_FSM.bot_memory import StatesUsers, AuthorizationUser
+
+
+############################
+#         ВЫЙТИ
+############################
+# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выйти'],
+#                                                      step_menu=['Step_MAIN']),
+#                            state=[StatesUsers.start_user_pamel])
+# async def come_back_start_menu(call: CallbackQuery, state: FSMContext, callback_data: dict):
+#     await call.message.edit_text('Цель бота, упростить заполнение табеля рабочего времени сотрудников Лахта Центр\n'
+#                                  'Введите PIN_CODE для входа в личный кабинет', reply_markup=None)
+#     await state.reset_state()
 
 
 ########################
 #      ГЛАВНОЕ МЕНЮ
 ########################
-async def cmd_users_panel(message: types.Message):
-    await message.delete()
-    await message.answer(f'Панель управления Подрядчика', reply_markup=KBLines.get_start_panel_btn())
-    await StatesUsers.start_user_pamel.set()
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
+                                                     step_menu=['AUTH_USER']),
+                           state=[AuthorizationUser.correct_password_user])
+async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        await call.message.edit_text(f'Добро пожаловать в панель управления подрядчика\n'
+                                     f'Вы авторизовались как {"<b>"}{data["user_name"]}{"</b>"}',
+                                     parse_mode='HTML', reply_markup=KBLines.get_start_panel_btn())
+        await StatesUsers.start_user_pamel.set()
 
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Главное'],
@@ -32,7 +47,8 @@ async def back_to_user_panel(call: CallbackQuery, state: FSMContext, callback_da
     async with state.proxy() as data:
         if callback_data.get('step_menu') == 'SAVE_FORM':
             await bot.answer_callback_query(call.id,
-                                            text=f'Форма успешно сохранена. Её можно просмотреть в меню', show_alert=True)
+                                            text=f'Форма успешно сохранена. Её можно просмотреть в меню',
+                                            show_alert=True)
             # # Очищаю словарь, для новых значений и корректного отображения данных
             names_for_clean = ['name_work', 'name_stage', 'name_build', 'level', 'workers', 'actual_worker']
             for name_string in names_for_clean:
@@ -103,12 +119,16 @@ async def add_name_work_in_db(call: CallbackQuery, state: FSMContext):
                                                      step_menu=['Step_NAME', "SEL_NAME", 'STAGE']),
                            state=[StatesUsers.create_new_form, StatesUsers.step_stage_work,
                                   StatesUsers.select_name_work])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+                                                     step_menu=['DEL_NAMES']),
+                           state=[StatesUsers.select_name_work])
 async def step_select_name_work(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=None)
     names_work_db = [name[0] for name in CommandsDB.get_all_names_work()] if len(
         CommandsDB.get_all_names_work()) > 0 else False
     if names_work_db:
-        text_m = ''.join([f'{"<b>"}{name[0]}{"</b>"} -  {"<u>"}{"<b>"}{name[1]}{"</b>"}{"</u>"} \n' for name in CommandsDB.get_all_names_work()])
+        text_m = ''.join([f'{"<b>"}{name[0]}{"</b>"} -  {"<u>"}{"<b>"}{name[1]}{"</b>"}{"</u>"} \n' for name in
+                          CommandsDB.get_all_names_work()])
         await call.message.answer(f'Выберите наименование работ\n и нажмите кнопку Продолжить\n'
                                   f'Список наименований:\n' + text_m,
                                   reply_markup=KBLines.get_names_one_msg("NAMES", names_work_db),
@@ -151,7 +171,8 @@ async def accept_del_name_work(call: CallbackQuery, callback_data: dict, state: 
                 CommandsDB.get_all_names_work()) > 0 else False
             if names_work_db:
                 text_m = ''.join(
-                    [f'{"<b>"}{name[0]}{"</b>"} - {"<b>"}{name[1]}{"</b>"} \n' for name in CommandsDB.get_all_names_work()])
+                    [f'{"<b>"}{name[0]}{"</b>"} - {"<b>"}{name[1]}{"</b>"} \n' for name in
+                     CommandsDB.get_all_names_work()])
                 await call.message.answer(f'Выберите наименование работ\n и нажмите кнопку Продолжить\n'
                                           f'Список наименований:\n' + text_m,
                                           reply_markup=KBLines.get_names_one_msg("NAMES", names_work_db),
@@ -548,7 +569,7 @@ async def select_write_worker_actually(call: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=["Назад"],
                                                      step_menu=['SAVE_FORM', 'ADD_S_FORM']),
                            state=[StatesUsers.save_form, StatesUsers.add_string])
-async def save_or_add_string(call: CallbackQuery, state: FSMContext):
+async def save_or_add_string(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await StatesUsers.step_save_or_add_string.set()
     async with state.proxy() as data:
         text_msg = f'|     {"<b>"}Форма{"</b>"}\n' \
@@ -566,12 +587,19 @@ async def save_or_add_string(call: CallbackQuery, state: FSMContext):
 
         await call.message.edit_text(text=text_msg + text_end,
                                      reply_markup=KBLines.save_or_add_string('S_A_FORM'), parse_mode='HTML')
-        if not data.get('string'):
-            data['string'] = 1
-            data[data['string']] = copy.deepcopy(dict(data))
-        else:
-            data['string'] = data['string'] + 1
-            data[data['string']] = copy.deepcopy(dict(data))
+        if callback_data.get('name_btn') == 'Продолжить':
+            if not data.get('string'):
+                data['string'] = 1
+                data[data['string']] = dict()
+                keys_list = ['name_stage', 'name_work', 'name_build', 'level', 'workers']
+                for key in keys_list:
+                    data[data['string']][key] = data.get(key)
+            else:
+                data['string'] = data['string'] + 1
+                data[data['string']] = dict()
+                keys_list = ['name_stage', 'name_work', 'name_build', 'level', 'workers']
+                for key in keys_list:
+                    data[data['string']][key] = data.get(key)
 
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Сохранить', ],
@@ -598,17 +626,7 @@ async def save_form(call: CallbackQuery, state: FSMContext):
 
 
 def register_handlers_users(dp: Dispatcher):
-    ############################
-    # Отмена Назад Главное меню
-    ############################
-    dp.register_message_handler(back_to_user_panel, lambda message: 'Назад' in message.text,
-                                state=[StatesUsers.create_new_form,
-                                       StatesUsers.write_name_work,
-                                       StatesUsers.select_name_work,
-                                       StatesUsers.write_stage_work,
-
-                                       ])
-    dp.register_message_handler(cmd_users_panel, lambda message: 'Подрядчики' in message.text)
+    # dp.register_message_handler(cmd_users_panel, lambda message: 'Подрядчики' in message.text)
 
     dp.register_message_handler(write_name_work, state=StatesUsers.write_name_work)
     dp.register_message_handler(write_stage_work, state=StatesUsers.write_stage_work)

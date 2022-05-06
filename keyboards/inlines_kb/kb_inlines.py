@@ -19,12 +19,14 @@ class KBLines:
 
     @staticmethod
     def step_name_work():
-        btn_add_name_work = InlineKeyboardButton(text='Добавить наименование работ', callback_data=menu_callback_user.new(
-            step_menu='Step_NAME', name_btn='Добавить имя'
-        ))
-        btn_get_names_work = InlineKeyboardButton(text='Выбрать наименование работ', callback_data=menu_callback_user.new(
-            step_menu='Step_NAME', name_btn='Посмотреть'
-        ))
+        btn_add_name_work = InlineKeyboardButton(text='Добавить наименование работ',
+                                                 callback_data=menu_callback_user.new(
+                                                     step_menu='Step_NAME', name_btn='Добавить имя'
+                                                 ))
+        btn_get_names_work = InlineKeyboardButton(text='Выбрать наименование работ',
+                                                  callback_data=menu_callback_user.new(
+                                                      step_menu='Step_NAME', name_btn='Посмотреть'
+                                                  ))
         btn_exit = InlineKeyboardButton(text='Главное меню', callback_data=menu_callback_user.new(
             step_menu='Step_NAME', name_btn='Главное'
         ))
@@ -98,8 +100,7 @@ class KBLines:
         btn_next = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Назад'
         ))
-        return InlineKeyboardMarkup(row_width=2).row(btn_next).row(btn_back)
-
+        return InlineKeyboardMarkup(row_width=2).row(btn_back).row(btn_next)
 
     @staticmethod
     def get_kb_stage(name_step):
@@ -133,18 +134,6 @@ class KBLines:
 
     @staticmethod
     def get_workers_menu(name_step):
-        # btn_sec = InlineKeyboardButton(text='Охрана', callback_data=workers.new(
-        #     step_menu=f'{name_step}', name='Охрана'
-        # ))
-        # btn_duty = InlineKeyboardButton(text='Дежурный', callback_data=workers.new(
-        #     step_menu=f'{name_step}', name='Дежурный'
-        # ))
-        # btn_worker = InlineKeyboardButton(text='Рабочий', callback_data=workers.new(
-        #     step_menu=f'{name_step}', name='Рабочий'
-        # ))
-        # btn_itr = InlineKeyboardButton(text='ИТР', callback_data=workers.new(
-        #     step_menu=f'{name_step}', name='ИТР'
-        # ))
         inline_kb = InlineKeyboardMarkup(row_width=3)
         workers_list = ['Охрана', 'Дежурный', 'Рабочий', 'ИТР']
         for worker in workers_list:
@@ -152,7 +141,7 @@ class KBLines:
                 step_menu=f'{name_step}', name=f'{worker}', name_btn='Имя'
             ))
             btn_select = InlineKeyboardButton(text='Выбрать', callback_data=workers.new(
-                step_menu=f'{name_step}',  name=f'{worker}', name_btn='Выбрать'
+                step_menu=f'{name_step}', name=f'{worker}', name_btn='Выбрать'
             ))
             inline_kb.row(btn_worker, btn_select)
         btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
@@ -183,3 +172,62 @@ class KBLines:
             step_menu=f'{name_step}', name_btn='Назад'
         ))
         return InlineKeyboardMarkup(row_width=2).row(btn_save_form).row(btn_add_string).row(btn_back)
+
+    @staticmethod
+    def get_admin_panel_start(name_step):
+        btn_get_table = InlineKeyboardButton(text='Выгрузить таблицу', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Выгрузить'
+        ))
+        btn_add_user = InlineKeyboardButton(text='Добавить подрядчика', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Добавить_П'
+        ))
+        btn_get_users = InlineKeyboardButton(text='Подрядчики', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Подрядчики'
+        ))
+        btn_exit = InlineKeyboardButton(text='Выйти', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Выйти'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_get_table).row(btn_add_user).row(btn_get_users).row(btn_exit)
+
+    @staticmethod
+    def get_names_users_one_msg(step_menu: str,
+                                names_users_from_db: list):
+        kb_inline = InlineKeyboardMarkup(row_width=3)
+        for name in names_users_from_db:
+            btn_name_work = InlineKeyboardButton(text=f'{name.name}', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{name.name}', name_btn='Имя'))
+            btn_pin_code = InlineKeyboardButton(text=f'{name.password}', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{name.name}', name_btn='PIN'))
+
+            btn_select = InlineKeyboardButton(text='Изменить', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{name.name}', name_btn='Изменить'
+            ))
+            if not name.admin:
+                btn_del = InlineKeyboardButton(text='Удалить', callback_data=btn_names_msg.new(
+                    step_menu=step_menu, name=f'{name.name}', name_btn='Удалить'
+                ))
+                kb_inline.row(btn_name_work, btn_pin_code, btn_select, btn_del)
+            else:
+                btn_del = InlineKeyboardButton(text=' ', callback_data=btn_names_msg.new(
+                    step_menu=step_menu, name=f'{name.name}', name_btn='_'
+                ))
+                kb_inline.row(btn_name_work, btn_pin_code, btn_select, btn_del)
+
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{step_menu}', name_btn='Назад'
+        ))
+        kb_inline.row(btn_back)
+        return kb_inline
+
+    @staticmethod
+    def btn_change_user(name_step):
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'
+        ))
+        btn_change_name = InlineKeyboardButton(text='Наименование', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Наименование'
+        ))
+        btn_change_pin = InlineKeyboardButton(text='PIN_CODE', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='PIN_CODE'
+        ))
+        return InlineKeyboardMarkup(row_width=3).row(btn_change_name).row(btn_change_pin).row(btn_back)

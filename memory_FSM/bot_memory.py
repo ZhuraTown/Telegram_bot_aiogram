@@ -6,9 +6,20 @@ from aiogram import types
 
 class StatesAdminUser(StatesGroup):
     start_admin_panel = State()
+
     get_table = State()
     add_user = State()
+
     get_info_users = State()
+    del_user = State()
+
+    edit_user = State()
+
+    edit_user_name = State()
+    edit_user_name_correct = State()
+
+    edit_user_pin = State()
+    edit_user_pin_correct = State()
 
     write_user_name = State()
     write_user_comment = State()
@@ -17,6 +28,12 @@ class StatesAdminUser(StatesGroup):
 
 class Companies(StatesGroup):
     list_companies = State()
+
+
+class AuthorizationUser(StatesGroup):
+    write_password = State()
+    correct_password_user = State()
+    correct_password_admin = State()
 
 
 class StatesUsers(StatesGroup):
