@@ -1,16 +1,14 @@
+import random
+
 from aiogram import types, Dispatcher
-from keyboards.classic_kb import (kb_admin_panel, kb_get_table_panel,
-                                  kb_btn_back, kb_finish_register_company, kb_btn_back_menu)
-
-from aiogram.types import CallbackQuery
-from keyboards.inlines_kb.callback_datas import menu_callback_user, btn_names_msg
-from create_bot import dp, bot
-
-from data_base.db_commands import CommandsDB
-from keyboards.inlines_kb.kb_inlines import KBLines
-
-from memory_FSM.bot_memory import Companies, StatesAdminUser, AuthorizationUser
 from aiogram.dispatcher import FSMContext
+from aiogram.types import CallbackQuery
+
+from create_bot import dp, bot
+from data_base.db_commands import CommandsDB
+from keyboards.inlines_kb.callback_datas import menu_callback_user, btn_names_msg
+from keyboards.inlines_kb.kb_inlines import KBLines
+from memory_FSM.bot_memory import StatesAdminUser, AuthorizationUser
 
 
 ###############################
@@ -20,31 +18,19 @@ from aiogram.dispatcher import FSMContext
                                                      step_menu=['AUTH_ADMIN']),
                            state=[AuthorizationUser.correct_password_admin])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-                                                     step_menu=['A_P_USERS']),
-                           state=[StatesAdminUser.get_info_users])
+                                                     step_menu=['A_P_USERS', "NAME_USER"]),
+                           state=[StatesAdminUser.get_info_users, StatesAdminUser.user_name_correct])
 async def cmd_admin_panel(call: CallbackQuery, state: FSMContext):
+    await bot.answer_callback_query(call.id, cache_time=5)
     await state.reset_state()
     await call.message.edit_text('Панель управления Администратора',
                                  reply_markup=KBLines.get_admin_panel_start("ADMIN_PANEL"))
     await StatesAdminUser.start_admin_panel.set()
 
-
-async def back_to_admin_panel(message: types.Message, state: FSMContext):
-    await message.answer('Вы вернулись в основное меню администратора',
-                         reply_markup=kb_admin_panel)
-    await state.reset_state()
-    await StatesAdminUser.start_admin_panel.set()
-
-
 ######################
 #    ГЛАВНОЕ МЕНЮ
 ######################
-async def get_table(message: types.Message):
-    await message.answer('Выгрузка таблицы', reply_markup=kb_get_table_panel)
-    await StatesAdminUser.get_table.set()
-
-
-@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Подрядчики'],
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Пользователи'],
                                                      step_menu=['ADMIN_PANEL']),
                            state=[StatesAdminUser.start_admin_panel])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
@@ -56,7 +42,7 @@ async def get_table(message: types.Message):
 async def get_information_companies(call: CallbackQuery):
     await bot.answer_callback_query(call.id)
     companies = CommandsDB.get_all_users()
-    await call.message.edit_text(f'Подрядчики. Можно редактировать наименование и PINCODE\n'
+    await call.message.edit_text(f'Пользователи. Можно редактировать наименование и PINCODE\n'
                                  f'Можно удалить подрядчика',
                                  reply_markup=KBLines.get_names_users_one_msg('A_P_USERS', companies))
     await StatesAdminUser.get_info_users.set()
@@ -92,10 +78,6 @@ async def accept_delete_user(call: CallbackQuery, state: FSMContext):
                                      f'Можно удалить подрядчика',
                                      reply_markup=KBLines.get_names_users_one_msg('A_P_USERS', companies))
 
-
-# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-#                                                      step_menu=['CHANGE_USER_NAME']),
-#                            state=[StatesAdminUser.edit_user_name])
 @dp.callback_query_handler(btn_names_msg.filter(name_btn=['Изменить'],
                                                 step_menu=['A_P_USERS']),
                            state=[StatesAdminUser.get_info_users])
@@ -217,82 +199,63 @@ async def save_new_pin_user(call: CallbackQuery, state: FSMContext):
 # Создание нового пользователя
 ###############################
 
-async def write_company_name(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['company_name'] = message.text
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить_П'],
+                                                     step_menu=['ADMIN_PANEL']),
+                           state=[StatesAdminUser.start_admin_panel])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить_П'],
+                                                     step_menu=['ADMIN_PANEL']),
+                           state=[StatesAdminUser.start_admin_panel])
+async def create_new_user(call: CallbackQuery):
+    await bot.answer_callback_query(call.id, cache_time=5)
+    await call.message.edit_text(f'Создать нового пользователя\n'
+                                 f'Длина не более 18 символов', reply_markup=None)
+    await StatesAdminUser.write_user_name.set()
 
-    if CommandsDB.get_count(message.text) != 0:
-        await message.answer(f"Пользователь {message.text} уже есть в системе \n"
-                             f"Введите новое имя или нажмите кнопку Назад")
-        await StatesAdminUser.add_user.set()
+
+async def write_name_user(message: types.Message, state: FSMContext):
+    names_user = CommandsDB.get_names_all_users()
+    if message.text not in names_user:
+        if len(message.text) < 19:
+            async with state.proxy() as data:
+                data['new_name_user'] = message.text
+            await message.answer(f'Имя пользователя: {"<b>"}{message.text}{"</b>"}\n'
+                                 f'Сохранить?', parse_mode='HTML',
+                                 reply_markup=KBLines.btn_next_or_back('NAME_USER'))
+            await StatesAdminUser.user_name_correct.set()
+        else:
+            await message.answer(f'Длина введенного имени({"<b>"}{message.text}{"</b>"})\n'
+                                 f'{len(message.text)}. Введите не более 18 символов', parse_mode="HTML")
     else:
-        await StatesAdminUser.write_user_name.set()
-        await message.answer('Введите комментарий к компании', reply_markup=kb_btn_back)
+        await message.answer(f'Имя пользователя({"<b>"}{message.text}{"</b>"}) уже есть в системе!\n'
+                             f'Введите имя пользователя, которого нету в системе.', parse_mode='HTML')
 
 
-async def write_company_comment(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
+                                                     step_menu=['NAME_USER']),
+                           state=[StatesAdminUser.user_name_correct])
+async def save_new_user(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        data['comment'] = message.text
-    await StatesAdminUser.write_user_comment.set()
-    await message.answer(f'Сохранить компанию?\n'
-                         f'Наименование: {data["company_name"]}\n'
-                         f'Комментарий: {data["comment"]}\n',
-                         reply_markup=kb_finish_register_company)
+        pin_codes_db = CommandsDB.get_all_users(user_password=True)
+        pin_code_user = random.randint(1000, 9999)
+        while pin_code_user in pin_codes_db:
+            pin_code_user = random.randint(1000, 9999)
+        # Создаём пользователя
+        if CommandsDB.add_user_system(data['new_name_user'], pin_code_user):
+            await bot.answer_callback_query(call.id,
+                                            text=f'Пользователь:{data["new_name_user"]}\n'
+                                                 f'Успешно добавлен в систему!', show_alert=True)
+        else:
+            await bot.answer_callback_query(call.id,
+                                            text=f'Не удалось добавить пользователя: {data["new_name_user"]}'
+                                                 f'в систему!', show_alert=True)
+        await state.reset_state()
+        await call.message.edit_text('Панель управления Администратора',
+                                     reply_markup=KBLines.get_admin_panel_start("ADMIN_PANEL"))
+        await StatesAdminUser.start_admin_panel.set()
 
-
-async def save_new_user(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['save'] = True
-    await StatesAdminUser.save_user.set()
-    CommandsDB.add_user_system(name=data['company_name'],
-                               comment=data['comment'])
-    await message.answer(f"Компания: {data['company_name']}\n"
-                         f"Комментарий: {data['comment']}"
-                         f"\n Сохранена",
-                         reply_markup=kb_btn_back_menu)
-
-
-########################################
-#
-########################################
 
 def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(write_user_name, state=StatesAdminUser.edit_user_name)
     dp.register_message_handler(write_user_pin, state=StatesAdminUser.edit_user_pin)
-    # dp.register_message_handler(back_to_admin_panel, lambda message: 'В главное меню' in message.text,
-    #                             state=[StatesAdminUser.save_user])
-    ############################
-    # Отмена Назад Главное меню
-    ############################
-    # dp.register_message_handler(back_to_admin_panel, lambda message: 'Назад' in message.text,
-    #                             state=[
-    #                                 Companies.list_companies,
-    #                                 StatesAdminUser.get_table,
-    #                                 StatesAdminUser.add_user,
-    #                                 StatesAdminUser.write_user_name,
-    #                                 StatesAdminUser.write_user_comment,
-    #                                 StatesAdminUser.get_info_users
-    #                             ])
-    # dp.register_message_handler(back_to_admin_panel, lambda message: 'Отменить' in message.text,
-    #                             state=[StatesAdminUser.write_user_comment])
-    # dp.register_message_handler(back_to_admin_panel, lambda message: 'В главное меню' in message.text,
-    #                             state=[StatesAdminUser.save_user])
-    #
-    # #############################
-    # #       ГЛАВНОЕ МЕНЮ
-    # #############################
-    # dp.register_message_handler(cmd_admin_panel, lambda message: 'Ген_подрядчик' in message.text)
-    # dp.register_message_handler(get_table, lambda message: 'Выгрузить таблицу' in message.text,
-    #                             state=StatesAdminUser.start_admin_panel)
-    # dp.register_message_handler(get_information_companies, lambda message: 'Информация об орг-ях' in message.text,
-    #                             state=StatesAdminUser.start_admin_panel)
-    # dp.register_message_handler(add_company_user, lambda message: 'Добавить Подрядчика' in message.text,
-    #                             state=StatesAdminUser.start_admin_panel)
-    #
-    # ##############################
-    # #    ДОБАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ
-    # ##############################
-    # dp.register_message_handler(write_company_name, state=StatesAdminUser.add_user)
-    # dp.register_message_handler(write_company_comment, state=StatesAdminUser.write_user_name)
-    # dp.register_message_handler(save_new_user, lambda message: 'Сохранить' in message.text,
-    #                             state=StatesAdminUser.write_user_comment)
+    dp.register_message_handler(write_name_user, state=StatesAdminUser.write_user_name)
+

@@ -178,11 +178,11 @@ class KBLines:
         btn_get_table = InlineKeyboardButton(text='Выгрузить таблицу', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Выгрузить'
         ))
-        btn_add_user = InlineKeyboardButton(text='Добавить подрядчика', callback_data=menu_callback_user.new(
+        btn_add_user = InlineKeyboardButton(text='Добавить пользователя', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Добавить_П'
         ))
-        btn_get_users = InlineKeyboardButton(text='Подрядчики', callback_data=menu_callback_user.new(
-            step_menu=f'{name_step}', name_btn='Подрядчики'
+        btn_get_users = InlineKeyboardButton(text='Пользователи', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Пользователи'
         ))
         btn_exit = InlineKeyboardButton(text='Выйти', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Выйти'

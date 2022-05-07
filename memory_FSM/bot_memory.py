@@ -22,8 +22,8 @@ class StatesAdminUser(StatesGroup):
     edit_user_pin_correct = State()
 
     write_user_name = State()
-    write_user_comment = State()
-    save_user = State()
+    user_name_correct = State()
+
 
 
 class Companies(StatesGroup):

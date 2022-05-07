@@ -27,19 +27,26 @@ class CommandsDB:
         return rows
 
     @staticmethod
-    def add_user_system(name, comment, password=None, admin=False):
+    def get_names_all_users() -> list:
+        return [name[0] for name in session.query(User.name).all()]
+
+    @staticmethod
+    def add_user_system(name,  password, comment=None, admin=False):
         try:
             if session.query(User.name).filter(User.name == name).count() == 0:
                 session.add(User(name=name,
-                                 password=str(password) if password else f'{randint(1000, 9999)}',
+                                 password=password,
                                  comment=comment,
                                  admin=admin))
                 session.flush()
+                return True
             else:
                 print(f"Пользователь с именем {name}, уже есть в БД")
+                return False
         except:
             session.rollback()
             print(f'Ошибка записи {name} в БД')
+            return False
         finally:
             session.commit()
 
