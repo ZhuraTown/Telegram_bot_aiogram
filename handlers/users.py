@@ -1,25 +1,13 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, ParseMode
+from aiogram.utils.markdown import text, quote_html, escape_md, code, hbold
 
 from create_bot import dp, bot
 from data_base.db_commands import CommandsDB
-from keyboards.classic_kb import kb_btn_back, kb_start
 from keyboards.inlines_kb.callback_datas import menu_callback_user, btn_names_msg, workers
 from keyboards.inlines_kb.kb_inlines import KBLines
 from memory_FSM.bot_memory import StatesUsers, AuthorizationUser
-
-
-############################
-#         ВЫЙТИ
-############################
-# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выйти'],
-#                                                      step_menu=['Step_MAIN']),
-#                            state=[StatesUsers.start_user_pamel])
-# async def come_back_start_menu(call: CallbackQuery, state: FSMContext, callback_data: dict):
-#     await call.message.edit_text('Цель бота, упростить заполнение табеля рабочего времени сотрудников Лахта Центр\n'
-#                                  'Введите PIN_CODE для входа в личный кабинет', reply_markup=None)
-#     await state.reset_state()
 
 
 ########################
@@ -33,7 +21,7 @@ async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         await call.message.edit_text(f'Добро пожаловать в панель управления подрядчика\n'
                                      f'Вы авторизовались как {"<b>"}{data["user_name"]}{"</b>"}',
-                                     parse_mode='HTML', reply_markup=KBLines.get_start_panel_btn())
+                                     parse_mode=ParseMode.HTML, reply_markup=KBLines.get_start_panel_btn())
         await StatesUsers.start_user_pamel.set()
 
 
@@ -107,7 +95,7 @@ async def add_name_work_in_db(call: CallbackQuery, state: FSMContext):
             await bot.answer_callback_query(call.id,
                                             text=f'Наименование работы: {name_work}\n'
                                                  f'Уже есть в базе', show_alert=True)
-    await call.message.answer('Заполнение формы \n Выберите следующий шаг',
+    await call.message.answer('Заполнение формы\nВыберите следующий шаг',
                               reply_markup=KBLines.step_name_work())
     await StatesUsers.create_new_form.set()
 
@@ -228,14 +216,12 @@ async def step_stage(call: CallbackQuery, state: FSMContext, callback_data: dict
             names_for_clean = ['name_stage', 'name_build', 'level', 'workers', 'actual_worker']
             for name_string in names_for_clean:
                 del data[name_string]
-            await call.message.edit_text(f'|     {"<b>"}Форма{"</b>"}      \n'
-                                         f'|Наименование работ: {"<b>"}{name_work}{"</b>"}\n'
+            await call.message.edit_text(f'{"<b>"}{name_work}{"</b>"}\n'
                                          f'--------------------------------\n'
                                          f'Введите этап работы для новой строки.',
                                          reply_markup=KBLines.get_kb_stage('STAGE'), parse_mode='HTML')
         else:
-            await call.message.edit_text(f'|     {"<b>"}Форма{"</b>"}      \n'
-                                         f'|Наименование работ: {"<b>"}{name_work}{"</b>"}\n'
+            await call.message.edit_text(f'{"<b>"}{name_work}{"</b>"}\n'
                                          f'--------------------------------\n'
                                          f'Введите этап работы.',
                                          reply_markup=KBLines.get_kb_stage('STAGE'), parse_mode='HTML')
@@ -268,8 +254,7 @@ async def write_stage_work(message: types.Message, state: FSMContext):
 async def step_build(call: CallbackQuery, state: FSMContext):
     await StatesUsers.step_build_work.set()
     async with state.proxy() as data:
-        await call.message.edit_text(f'|     {"<b>"}Форма{"</b>"}\n'
-                                     f'|Наименование работ: {"<b>"}{data["name_work"]}{"</b>"}\n'
+        await call.message.edit_text(f'{"<b>"}{data["name_work"]}{"</b>"}\n'
                                      f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n'
                                      f'--------------------------------\n'
                                      f'Выберите следующий шаг.',
@@ -306,8 +291,7 @@ async def add_name_build_in_db(call: CallbackQuery, state: FSMContext):
         else:
             await bot.answer_callback_query(call.id, text=f'Здание: {name_build}\n'
                                                           f'Уже есть в базе', show_alert=True)
-    await call.message.answer(f'|     {"<b>"}Форма{"</b>"}\n'
-                              f'|Наименование работ: {"<b>"}{data["name_work"]}{"</b>"}\n'
+    await call.message.answer(f'{"<b>"}{data["name_work"]}{"</b>"}\n'
                               f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n'
                               f'--------------------------------\n'
                               f'Выберите следующий шаг.',
@@ -394,8 +378,7 @@ async def select_name_work(call: CallbackQuery, callback_data: dict, state: FSMC
 async def step_build(call: CallbackQuery, state: FSMContext):
     await StatesUsers.step_level_build_work.set()
     async with state.proxy() as data:
-        await call.message.edit_text(f'|     {"<b>"}Форма{"</b>"}\n'
-                                     f'|Наименование работ: {"<b>"}{data["name_work"]}{"</b>"}\n'
+        await call.message.edit_text(f'{"<b>"}{data["name_work"]}{"</b>"}\n'
                                      f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n'
                                      f'|Здание: {"<b>"}{data["name_build"]}{"</b>"}\n'
                                      f'--------------------------------\n'
@@ -433,8 +416,7 @@ async def step_workers(call: CallbackQuery, state: FSMContext):
         if "workers" not in data:
             data['workers'] = {}
 
-        text_msg = f'|     {"<b>"}Форма{"</b>"}\n' \
-                   f'|Наименование работ: {"<b>"}{data["name_work"]}{"</b>"}\n' \
+        text_msg = f'{"<b>"}{data["name_work"]}{"</b>"}\n' \
                    f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n' \
                    f'|Здание: {"<b>"}{data["name_build"]}{"</b>"}\n' \
                    f'|Этаж: {"<b>"}{data["level"]}{"</b>"}\n' \
@@ -572,35 +554,65 @@ async def select_write_worker_actually(call: CallbackQuery, state: FSMContext):
 async def save_or_add_string(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await StatesUsers.step_save_or_add_string.set()
     async with state.proxy() as data:
-        text_msg = f'|     {"<b>"}Форма{"</b>"}\n' \
-                   f'|Наименование работ: {"<b>"}{data["name_work"]}{"</b>"}\n' \
-                   f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n' \
-                   f'|Здание: {"<b>"}{data["name_build"]}{"</b>"}\n' \
-                   f'|Этаж: {"<b>"}{data["level"]}{"</b>"}\n' \
-                   f'--------------------------------\n'
+        # text_msg = f'{"<b>"}{data["name_work"]}{"</b>"}\n' \
+        #            f'{"<pre>"}|ЭТАП|ЗДАНИЕ|ЭТАЖ|{"</pre>"} \n'\
+        #            f'{"<pre>"}|{data["name_stage"]}|{data["name_build"]}|{data["level"]}| {"</pre>"} \n'\
+        #            f'------------------------------------' \
+        #            f'{"<b>"}{data["name_work"]}{"</b>"}\n' \
+        #            f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n' \
+        #            f'|Здание: {"<b>"}{data["name_build"]}{"</b>"}\n' \
+        #            f'|Этаж: {"<b>"}{data["level"]}{"</b>"}\n' \
+        #            f'--------------------------------\n'
+        #
+        # text_msg = text_msg + 'Сотрудники (План/Факт) \n' \
+        #                       '--------------------------------\n'
+        # text_end = f'Сохранить {"<b>"}форму{"</b>"} или добавить {"<b>"}новую строку{"</b>"}?'
+        # for worker, count in data['workers'].items():
+        #     text_msg = text_msg + f'{"<b>"}{worker} : ({count[0]}/{0 if count[1] is None else count[1]}{"</b>"})\n'
 
-        text_msg = text_msg + 'Сотрудники (План/Факт) \n' \
-                              '--------------------------------\n'
-        text_end = f'Сохранить {"<b>"}форму{"</b>"} или добавить {"<b>"}новую строку{"</b>"}?'
-        for worker, count in data['workers'].items():
-            text_msg = text_msg + f'{"<b>"}{worker} : ({count[0]}/{0 if count[1] is None else count[1]}{"</b>"})\n'
-
-        await call.message.edit_text(text=text_msg + text_end,
-                                     reply_markup=KBLines.save_or_add_string('S_A_FORM'), parse_mode='HTML')
         if callback_data.get('name_btn') == 'Продолжить':
             if not data.get('string'):
                 data['string'] = 1
                 data[data['string']] = dict()
-                keys_list = ['name_stage', 'name_work', 'name_build', 'level', 'workers']
+                keys_list = ['name_stage', 'name_work', 'name_build', 'level', 'workers', 'user_name']
                 for key in keys_list:
                     data[data['string']][key] = data.get(key)
             else:
                 data['string'] = data['string'] + 1
                 data[data['string']] = dict()
-                keys_list = ['name_stage', 'name_work', 'name_build', 'level', 'workers']
+                keys_list = ['name_stage', 'name_work', 'name_build', 'level', 'workers', 'user_name']
                 for key in keys_list:
                     data[data['string']][key] = data.get(key)
+        # Оформление сообщения
+        start_msg = "```\n"
+        end_msg = "```"
+        line_point = code(f"{'.' * 31}\n")
+        line_line = code(f"{'-' * 31}\n")
+        name_work = f'{" " * ((31 - len(data["name_work"])) // 2)}{data["name_work"]}\n'
+        text_titles = "|  ЭТАП  |    ЗДАНИЕ    | ЭТАЖ|\n"
+        workers_title = "|Охрана|Дежурный|Рабочие| ИТР |\n"
 
+        def get_workers(d_base) -> list:
+            return [
+                str(d_base['workers']['Охрана'][0] + '/' + d_base['workers']['Охрана'][1] if d_base['workers']['Охрана'][1] else 0) if d_base['workers'].get('Охрана') else ' ',
+                str(d_base['workers']['Дежурный'][0] + '/' + d_base['workers']['Дежурный'][1] if d_base['workers']['Дежурный'][1] else 0) if d_base['workers'].get('Дежурный') else ' ',
+                str(d_base['workers']['Рабочий'][0] + '/' + d_base['workers']['Рабочий'][1] if d_base['workers']['Рабочий'][1] else 0) if d_base['workers'].get('Рабочий') else ' ',
+                str(d_base['workers']['ИТР'][0] + '/' + d_base['workers']['ИТР'][1] if d_base['workers']['ИТР'][1] else 0) if d_base['workers'].get('ИТР') else ' ']
+
+        # if data.get('string'):
+        table_works = start_msg + name_work + line_point
+        for string_w in range(1, data.get('string') + 1):
+            base = data.get(string_w)
+            table_works += text_titles
+            table_works += f'|  {base["name_stage"]:<6}| {base["name_build"]:<13}| {base["level"]:<4}|\n'
+            table_works += line_line + workers_title
+            workers_table = get_workers(base)
+            table_works += f"| {workers_table[0]:<5}| {workers_table[1]:<7}| {workers_table[2]:<6}|{workers_table[3]:<5}|\n"
+            table_works += line_point
+        table_works += end_msg
+        await call.message.edit_text(text=table_works,
+                                     reply_markup=KBLines.save_or_add_string('S_A_FORM'),
+                                     parse_mode=ParseMode.MARKDOWN_V2)
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Сохранить', ],
                                                      step_menu=['S_A_FORM']),
@@ -626,8 +638,6 @@ async def save_form(call: CallbackQuery, state: FSMContext):
 
 
 def register_handlers_users(dp: Dispatcher):
-    # dp.register_message_handler(cmd_users_panel, lambda message: 'Подрядчики' in message.text)
-
     dp.register_message_handler(write_name_work, state=StatesUsers.write_name_work)
     dp.register_message_handler(write_stage_work, state=StatesUsers.write_stage_work)
     dp.register_message_handler(write_level_build_work, state=StatesUsers.write_level_build_work)
