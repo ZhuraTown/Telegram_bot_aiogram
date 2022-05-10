@@ -1,7 +1,7 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, ParseMode
-from aiogram.utils.markdown import text, quote_html, escape_md, code, hbold
+from aiogram.utils.markdown import code
 
 from create_bot import dp, bot
 from data_base.db_commands import CommandsDB
@@ -17,12 +17,15 @@ from memory_FSM.bot_memory import StatesUsers, AuthorizationUser
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
                                                      step_menu=['AUTH_USER']),
                            state=[AuthorizationUser.correct_password_user])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+                                                     step_menu=['SEL_FORM']),
+                           state=[StatesUsers.get_forms])
 async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         await call.message.edit_text(f'Добро пожаловать в панель управления подрядчика\n'
                                      f'Вы авторизовались как {"<b>"}{data["user_name"]}{"</b>"}',
                                      parse_mode=ParseMode.HTML, reply_markup=KBLines.get_start_panel_btn())
-        await StatesUsers.start_user_pamel.set()
+        await StatesUsers.start_user_panel.set()
 
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Главное'],
@@ -34,17 +37,94 @@ async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
 async def back_to_user_panel(call: CallbackQuery, state: FSMContext, callback_data: dict):
     async with state.proxy() as data:
         if callback_data.get('step_menu') == 'SAVE_FORM':
+
+            def get_list_user(base_dict: dict, name: str) -> list:
+                return base_dict['workers'][name] if base_dict['workers'].get(name) else [0, 0]
+
+            user_name = data["user_name"]
+            for string_form in range(1, data.get('string') + 1):
+                base = data.get(string_form)
+                CommandsDB.add_new_string_work_tm(user_name=user_name, name_work=base['name_work'],
+                                                  name_stage=base['name_stage'],
+                                                  name_build=base['name_build'], level=base['level'],
+                                                  number_security=get_list_user(base, 'Охрана'),
+                                                  number_duty=get_list_user(base, 'Дежурный'),
+                                                  number_worker=get_list_user(base, 'Рабочий'),
+                                                  number_itr=get_list_user(base, 'ИТР')
+                                                  )
+
             await bot.answer_callback_query(call.id,
                                             text=f'Форма успешно сохранена. Её можно просмотреть в меню',
                                             show_alert=True)
             # # Очищаю словарь, для новых значений и корректного отображения данных
-            names_for_clean = ['name_work', 'name_stage', 'name_build', 'level', 'workers', 'actual_worker']
+            names_for_clean = ['name_work', 'name_stage', 'name_build',
+                               'level', 'workers', 'actual_worker', 'string']
             for name_string in names_for_clean:
                 del data[name_string]
     await call.message.edit_text('Вы вернулись в меню Подрядчика', reply_markup=KBLines.get_start_panel_btn())
     await state.reset_state()
-    await StatesUsers.start_user_pamel.set()
+    await StatesUsers.start_user_panel.set()
 
+##########################
+#     ПОСМОТРЕТЬ ФОРМЫ
+##########################
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Посмотреть'],
+                                                     step_menu=["Step_MAIN"]),
+                           state=[StatesUsers.start_user_panel])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+                                                     step_menu=["SEL_FORM"]),
+                           state=[StatesUsers.get_form_with_name])
+async def get_forms_user(call: CallbackQuery, state: FSMContext):
+    await StatesUsers.get_forms.set()
+    async with state.proxy() as data:
+        names_forms = CommandsDB.get_name_forms_with_user(data['user_name'])
+        msg_start = f'Созданные формы: \n'
+        msg_text = ''
+        msg_end = 'Выберите номер формы или нажмите кнопку Назад'
+        data['name_forms'] = {}
+        for name, num in zip(names_forms, range(1, len(names_forms) + 1)):
+            msg_text += f'{"<b>"}{num}{"</b>"} - {name}\n'
+            data['name_forms'][num] = name
+        await call.message.edit_text(text=msg_start + msg_text + msg_end,
+                                     parse_mode=ParseMode.HTML,
+                                     reply_markup=KBLines.get_names_work_forms('SEL_FORM', [i for i in range(1, len(names_forms) + 1)]))
+
+@dp.callback_query_handler(btn_names_msg.filter(name_btn=['Посмотреть'],
+                                                step_menu=["SEL_FORM"]),
+                           state=[StatesUsers.get_forms])
+async def get_selected_form(call: CallbackQuery, state: FSMContext, callback_data: dict):
+    await StatesUsers.get_form_with_name.set()
+    async with state.proxy() as data:
+        name_work = data['name_forms'][int(callback_data.get("name"))]
+        strings_form = CommandsDB.get_forms_with_user_with_name(data['user_name'], name_work)
+        start_msg = "```\n"
+        end_msg = "```"
+        line_point = code(f"{'.' * 31}\n")
+        line_line = code(f"{'-' * 31}\n")
+        name_work = f'{" " * ((31 - len(name_work)) // 2)}{name_work}\n'
+        text_titles = "|  ЭТАП  |    ЗДАНИЕ    | ЭТАЖ|\n"
+        workers_title = "|Охрана|Дежурный|Рабочие| ИТР |\n"
+
+        def get_workers(d_base) -> list:
+            return [
+                str(f"{d_base['workers']['Охрана'][0]}/{d_base['workers']['Охрана'][1]}") if d_base['workers'].get('Охрана') else ' ',
+                str(f"{d_base['workers']['Дежурный'][0]}/{d_base['workers']['Дежурный'][1]}") if d_base['workers'].get('Дежурный') else ' ',
+                str(f"{d_base['workers']['Рабочий'][0]}/{d_base['workers']['Рабочий'][1]}") if d_base['workers'].get('Рабочий') else ' ',
+                str(f"{d_base['workers']['ИТР'][0]}/{d_base['workers']['ИТР'][1]}") if d_base['workers'].get('ИТР') else ' ']
+
+        table_works = start_msg + name_work + line_point
+        for strings_w in strings_form:
+            table_works += text_titles
+            table_works += f'|  {strings_w["name_stage"]:<6}| {strings_w["name_build"]:<13}| {strings_w["level"]:<4}|\n'
+            table_works += line_line + workers_title
+            workers_table = get_workers(strings_w)
+            table_works += f"| {workers_table[0]:<5}| {workers_table[1]:<7}| {workers_table[2]:<6}|{workers_table[3]:<5}|\n"
+            table_works += line_point
+        table_works += end_msg
+
+        await call.message.edit_text(text=table_works,
+                                     reply_markup=KBLines.panel_name_work('SEL_FORM'),
+                                     parse_mode=ParseMode.MARKDOWN_V2)
 
 ##########################
 #     СОЗДАТЬ ФОРМУ
@@ -52,7 +132,7 @@ async def back_to_user_panel(call: CallbackQuery, state: FSMContext, callback_da
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Создать форму', 'Назад'],
                                                      step_menu=["Step_MAIN", 'ADD_NAME_WORK', "NAMES"]),
-                           state=[StatesUsers.start_user_pamel, StatesUsers.write_name_work,
+                           state=[StatesUsers.start_user_panel, StatesUsers.write_name_work,
                                   StatesUsers.select_name_work])
 async def create_form(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
@@ -533,8 +613,17 @@ async def select_write_worker_actually(call: CallbackQuery, state: FSMContext):
         text_msg = 'Сотрудники (План/Факт) \n' \
                    '------------------------\n'
         text_msg_end = 'Добавить еще сотрудников?'
+        # Если пользователь ввёл план кол-во сотрудников, но не стал вводить фактическое,
+        # То пользователь будет висеть в словаре с None вместо фактического кол-во сотрудников
+        worker_for_del = []
         for worker, count in data['workers'].items():
-            text_msg = text_msg + f'{"<b>"}{worker} : ({count[0]}/{0 if count[1] is None else count[1]}{"</b>"})\n'
+            if not count[1]:
+                worker_for_del.append(worker)
+        for name_worker in worker_for_del:
+            del data['workers'][name_worker]
+
+        for worker, count in data['workers'].items():
+            text_msg = text_msg + f'{"<b>"}{worker} : ({count[0]}/{count[1]}{"</b>"})\n'
         await call.message.edit_text(text=text_msg + text_msg_end,
                                      reply_markup=KBLines.add_new_worker('F_WORKERS'),
                                      parse_mode='HTML')
@@ -594,12 +683,11 @@ async def save_or_add_string(call: CallbackQuery, state: FSMContext, callback_da
 
         def get_workers(d_base) -> list:
             return [
-                str(d_base['workers']['Охрана'][0] + '/' + d_base['workers']['Охрана'][1] if d_base['workers']['Охрана'][1] else 0) if d_base['workers'].get('Охрана') else ' ',
-                str(d_base['workers']['Дежурный'][0] + '/' + d_base['workers']['Дежурный'][1] if d_base['workers']['Дежурный'][1] else 0) if d_base['workers'].get('Дежурный') else ' ',
-                str(d_base['workers']['Рабочий'][0] + '/' + d_base['workers']['Рабочий'][1] if d_base['workers']['Рабочий'][1] else 0) if d_base['workers'].get('Рабочий') else ' ',
-                str(d_base['workers']['ИТР'][0] + '/' + d_base['workers']['ИТР'][1] if d_base['workers']['ИТР'][1] else 0) if d_base['workers'].get('ИТР') else ' ']
+                str(d_base['workers']['Охрана'][0] + '/' + d_base['workers']['Охрана'][1]) if d_base['workers'].get('Охрана') else ' ',
+                str(d_base['workers']['Дежурный'][0] + '/' + d_base['workers']['Дежурный'][1]) if d_base['workers'].get('Дежурный') else ' ',
+                str(d_base['workers']['Рабочий'][0] + '/' + d_base['workers']['Рабочий'][1]) if d_base['workers'].get('Рабочий') else ' ',
+                str(d_base['workers']['ИТР'][0] + '/' + d_base['workers']['ИТР'][1]) if d_base['workers'].get('ИТР') else ' ']
 
-        # if data.get('string'):
         table_works = start_msg + name_work + line_point
         for string_w in range(1, data.get('string') + 1):
             base = data.get(string_w)
@@ -632,9 +720,6 @@ async def save_form(call: CallbackQuery, state: FSMContext):
         await StatesUsers.add_string.set()
         await call.message.edit_text(text='Добавить строчку в форму?',
                                      reply_markup=KBLines.btn_next_or_back('ADD_S_FORM'), parse_mode='HTML')
-
-        for el, val in data.items():
-            print(el, '   ', val)
 
 
 def register_handlers_users(dp: Dispatcher):

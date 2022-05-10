@@ -1,8 +1,9 @@
+from datetime import datetime
 from random import randint
 from sqlalchemy import distinct, func
 from data_base.database import session
 
-from .models import User, TableNameWork, base, engine, TableNameBuild
+from .models import User, TableNameWork, base, engine, TableNameBuild, TableWork
 
 
 class CommandsDB:
@@ -31,7 +32,7 @@ class CommandsDB:
         return [name[0] for name in session.query(User.name).all()]
 
     @staticmethod
-    def add_user_system(name,  password, comment=None, admin=False):
+    def add_user_system(name, password, comment=None, admin=False):
         try:
             if session.query(User.name).filter(User.name == name).count() == 0:
                 session.add(User(name=name,
@@ -108,9 +109,9 @@ class CommandsDB:
             print(f"Удаление прошло успешно.Пользователь с ID {id}")
             session.commit()
 
-    @staticmethod
-    def get_count(name):
-        return session.query(TableNameWork.name_work).filter(TableNameWork.name_work == name).count()
+    # @staticmethod
+    # def get_count(name):
+    #     return session.query(TableNameWork.name_work).filter(TableNameWork.name_work == name).count()
 
     #################################
     #      НАИМЕНОВАНИЯ РАБОТ
@@ -190,3 +191,57 @@ class CommandsDB:
     def get_all_names_builds():
         rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build).all()
         return rows
+
+    ###############################
+    #   ЗАПИСЬ ФОРМЫ ТАБЕЛЯ
+    ###############################
+    @staticmethod
+    def add_new_string_work_tm(user_name: str, name_work: str, name_stage: str,
+                               name_build: str, level: str,
+                               number_security: list,
+                               number_duty: list,
+                               number_worker: list,
+                               number_itr: list):
+        try:
+            data_today = datetime.now().date()
+            session.add(TableWork(user_name=user_name, name_work=name_work, name_stage=name_stage,
+                                  name_build=name_build, name_level=level, date_created=data_today,
+                                  number_security_p=number_security[0], number_security_f=number_security[1],
+                                  number_duty_p=number_duty[0], number_duty_f=number_duty[1],
+                                  number_worker_p=number_worker[0], number_worker_f=number_worker[1],
+                                  number_ITR_p=number_itr[0], number_ITR_f=number_itr[1],
+                                  ))
+            session.flush()
+            return True
+        except:
+            session.rollback()
+            print(f'Ошибка записи в БД')
+        finally:
+            session.commit()
+
+    @staticmethod
+    def get_forms_with_user_with_name(user_name: str, name_work: str) -> dict:
+        TB = TableWork
+
+        rows = session.query(TB.user_name, TB.name_work, TB.name_stage, TB.name_build, TB.name_level, TB.date_created,
+                             TB.number_security_p, TB.number_security_f, TB.number_duty_p, TB.number_duty_f,
+                             TB.number_worker_p, TB.number_worker_f, TB.number_ITR_p, TB.number_ITR_f,
+                             ).filter(TB.user_name == user_name, TB.name_work == name_work).all()
+        answer = [{
+            'name_work': row[1],
+            "name_stage": row[2],
+            "name_build": row[3],
+            "level": row[4],
+            'workers': {
+                "Охрана": [row[6], row[7]],
+                "Дежурный": [row[8], row[9]],
+                "Рабочий": [row[10], row[11]],
+                "ИТР": [row[12], row[13]]
+            }
+        } for row in rows]
+        return answer
+
+    @staticmethod
+    def get_name_forms_with_user(user_name):
+        TB = TableWork
+        return [name.name_work for name in session.query(TB.name_work).filter(TB.user_name == user_name).distinct().all()]

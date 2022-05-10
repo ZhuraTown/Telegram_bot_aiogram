@@ -1,7 +1,5 @@
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher import FSMContext
-from aiogram import types
 
 
 class StatesAdminUser(StatesGroup):
@@ -24,12 +22,6 @@ class StatesAdminUser(StatesGroup):
     write_user_name = State()
     user_name_correct = State()
 
-
-
-class Companies(StatesGroup):
-    list_companies = State()
-
-
 class AuthorizationUser(StatesGroup):
     write_password = State()
     correct_password_user = State()
@@ -37,10 +29,13 @@ class AuthorizationUser(StatesGroup):
 
 
 class StatesUsers(StatesGroup):
-    start_user_pamel = State()  # Начало работы, главное меню
+    start_user_panel = State()  # Начало работы, главное меню
 
     create_new_form = State()  # Создать форму
-    get_forms = State()  # Просмотреть форму
+
+    get_forms = State()  # Просмотреть формы
+    get_form_with_name = State()
+    edit_form_with_name = State()
 
     step_name_work = State()  # Шаг Наименования работ
     write_name_work = State()  # Добавить наименование работ

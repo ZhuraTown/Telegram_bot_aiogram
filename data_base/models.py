@@ -31,25 +31,34 @@ class TableWork(base):
                            primary_key=True,
                            autoincrement=True
                            )
-    user_id = Column(Integer, ForeignKey('users.user_id'), comment='Автор записи')
+    user_name = Column(String, comment='Автор записи')
     name_work = Column(String, comment='Наименование работ')
-    name_stage = Column(Integer, comment='Наименование этапа')
+    name_stage = Column(String, comment='Наименование этапа')
     name_build = Column(String, comment='Наименование здания')
     name_level = Column(String, comment='Наименование этажа')
-    number_security = Column(Integer, comment='Охрана')
-    number_duty = Column(Integer, comment='Дежурный')
-    number_worker = Column(Integer, comment='Рабочий')
-    number_ITR = Column(Integer, comment='ИТР')
+    number_security_p = Column(Integer, default=0, comment='Охрана План')
+    number_security_f = Column(Integer, default=0, comment='Охрана Факт')
+    number_duty_p = Column(Integer, default=0, comment='Дежурный План')
+    number_duty_f = Column(Integer, default=0, comment='Дежурный Факт')
+    number_worker_p = Column(Integer, default=0, comment='Рабочий План')
+    number_worker_f = Column(Integer, default=0, comment='Рабочий Факт')
+    number_ITR_p = Column(Integer, default=0, comment='ИТР План')
+    number_ITR_f = Column(Integer, default=0, comment='ИТР Факт')
     date_created = Column(Date, comment='Дата создания')
 
     def __repr__(self):
         return '<TableWork(user_id="{}", name_work="{}",name_stage="{}", name_build="{}", ' \
-               'name_level="{}",security="{}", duty="{}", worker="{}", itr="{}", date_created="{}" )>' \
-            .format(self.user_id, self.name_work,
+               'name_level="{}",security_p="{}",security_f="{}" ' \
+               'duty_p="{}", duty_f="{}", ' \
+               'worker_p="{}",worker_f="{}", itr_p="{}", itr_f="{}" ' \
+               'date_created="{}" )>' \
+            .format(self.user_name, self.name_work,
                     self.name_stage, self.name_build,
-                    self.name_level, self.number_security,
-                    self.number_duty, self.number_worker,
-                    self.number_ITR, self.date_created)
+                    self.name_level, self.number_security_p,
+                    self.number_security_f, self.number_duty_p,
+                    self.number_duty_f, self.number_worker_p,
+                    self.number_worker_f, self.number_ITR_p,
+                    self.number_ITR_f, self.date_created)
 
 
 class TableNameWork(base):
@@ -70,10 +79,10 @@ class TableNameBuild(base):
     __tablename__ = 'builds_work'
 
     build_id = Column(Integer,
-                          unique=True,
-                          primary_key=True,
-                          autoincrement=True
-                          )
+                      unique=True,
+                      primary_key=True,
+                      autoincrement=True
+                      )
     name_build = Column(String, comment='Наименование здания')
 
     def __repr__(self):

@@ -10,7 +10,7 @@ class KBLines:
             step_menu='Step_MAIN', name_btn='Создать форму'
         ))
         btn_get_forms = InlineKeyboardButton(text='Посмотреть созданные формы', callback_data=menu_callback_user.new(
-            step_menu='Step_MAIN', name_btn='Посмотреть формы'
+            step_menu='Step_MAIN', name_btn='Посмотреть'
         ))
         btn_exit = InlineKeyboardButton(text='Выйти', callback_data=menu_callback_user.new(
             step_menu='Step_MAIN', name_btn='Выйти'
@@ -54,6 +54,37 @@ class KBLines:
             step_menu=f'{step_name}', name_btn='Назад'
         ))
         return InlineKeyboardMarkup(row_width=2).row(btn_save).row(btn_back)
+
+    @staticmethod
+    def get_names_work_forms(step_menu: str, names_work_from_db: list):
+        # TODO выводит список с именами работ, кнопки Редактировать Просмотреть
+        # Кнопка назад
+        kb_inline = InlineKeyboardMarkup(row_width=2)
+        for name in names_work_from_db:
+            btn_name_work = InlineKeyboardButton(text=f'{name}', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{name}', name_btn='Имя'))
+            btn_select = InlineKeyboardButton(text='Посмотреть', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{name}', name_btn='Посмотреть'
+            ))
+            kb_inline.row(btn_name_work, btn_select)
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{step_menu}', name_btn='Назад'
+        ))
+        kb_inline.row(btn_back)
+        return kb_inline
+
+    @staticmethod
+    def panel_name_work(name_step):
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'
+        ))
+        btn_edit = InlineKeyboardButton(text='Изменить', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Изменить'
+        ))
+        btn_del = InlineKeyboardButton(text='Удалить', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Удалить'
+        ))
+        return InlineKeyboardMarkup(row_width=2).row(btn_edit).row(btn_del).row(btn_back)
 
     @staticmethod
     def get_names_one_msg(step_menu: str,

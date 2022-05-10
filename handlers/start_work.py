@@ -20,7 +20,7 @@ async def command_start(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выйти'],
                                                      step_menu=['Step_MAIN']),
-                           state=[StatesUsers.start_user_pamel])
+                           state=[StatesUsers.start_user_panel])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выйти'],
                                                      step_menu=['ADMIN_PANEL']),
                            state=[StatesAdminUser.start_admin_panel])
