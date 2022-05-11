@@ -434,8 +434,8 @@ async def select_name_work(call: CallbackQuery, callback_data: dict, state: FSMC
         await call.answer(cache_time=1)
     else:
         async with state.proxy() as data:
-            data['name_build'] = callback_data.get('name')
-        name_build = callback_data.get('name')
+            data['name_build'] = CommandsDB.get_name_build_with_id(callback_data.get('name'))
+        name_build = CommandsDB.get_name_build_with_id(callback_data.get('name'))
         await call.message.edit_text(f'Здание : {"<b>"}{name_build}{"</b>"}\n'
                                      f'Успешно выбрано', reply_markup=KBLines.btn_next_or_back('SEL_BUILD'),
                                      parse_mode="HTML")
@@ -639,22 +639,6 @@ async def select_write_worker_actually(call: CallbackQuery, state: FSMContext):
 async def save_or_add_string(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await StatesUsers.step_save_or_add_string.set()
     async with state.proxy() as data:
-        # text_msg = f'{"<b>"}{data["name_work"]}{"</b>"}\n' \
-        #            f'{"<pre>"}|ЭТАП|ЗДАНИЕ|ЭТАЖ|{"</pre>"} \n'\
-        #            f'{"<pre>"}|{data["name_stage"]}|{data["name_build"]}|{data["level"]}| {"</pre>"} \n'\
-        #            f'------------------------------------' \
-        #            f'{"<b>"}{data["name_work"]}{"</b>"}\n' \
-        #            f'|Этап: {"<b>"}{data["name_stage"]}{"</b>"}\n' \
-        #            f'|Здание: {"<b>"}{data["name_build"]}{"</b>"}\n' \
-        #            f'|Этаж: {"<b>"}{data["level"]}{"</b>"}\n' \
-        #            f'--------------------------------\n'
-        #
-        # text_msg = text_msg + 'Сотрудники (План/Факт) \n' \
-        #                       '--------------------------------\n'
-        # text_end = f'Сохранить {"<b>"}форму{"</b>"} или добавить {"<b>"}новую строку{"</b>"}?'
-        # for worker, count in data['workers'].items():
-        #     text_msg = text_msg + f'{"<b>"}{worker} : ({count[0]}/{0 if count[1] is None else count[1]}{"</b>"})\n'
-
         if callback_data.get('name_btn') == 'Продолжить':
             if not data.get('string'):
                 data['string'] = 1
@@ -697,6 +681,7 @@ async def save_or_add_string(call: CallbackQuery, state: FSMContext, callback_da
         await call.message.edit_text(text=table_works,
                                      reply_markup=KBLines.save_or_add_string('S_A_FORM'),
                                      parse_mode=ParseMode.MARKDOWN_V2)
+
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Сохранить', ],
                                                      step_menu=['S_A_FORM']),

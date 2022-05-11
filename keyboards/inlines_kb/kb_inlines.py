@@ -176,10 +176,6 @@ class KBLines:
             btn_worker = InlineKeyboardButton(text=f'{worker}', callback_data=workers.new(
                 step_menu=f'{name_step}', name=f'{worker}', name_btn='Выбрать'
             ))
-            # btn_select = InlineKeyboardButton(text='Выбрать', callback_data=workers.new(
-            #     step_menu=f'{name_step}', name=f'{worker}', name_btn='Выбрать'
-            # ))
-            # inline_kb.row(btn_worker, btn_select)
             inline_kb.row(btn_worker)
         btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Назад'

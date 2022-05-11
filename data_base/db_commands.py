@@ -192,6 +192,11 @@ class CommandsDB:
         rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build).all()
         return rows
 
+    @staticmethod
+    def get_name_build_with_id(build_id):
+        rows = session.query(TableNameBuild.name_build).filter(TableNameBuild.build_id == build_id).one()
+        return rows[0]
+
     ###############################
     #   ЗАПИСЬ ФОРМЫ ТАБЕЛЯ
     ###############################
