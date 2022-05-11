@@ -17,10 +17,11 @@ from memory_FSM.bot_memory import StatesUsers, AuthorizationUser
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
                                                      step_menu=['AUTH_USER']),
                            state=[AuthorizationUser.correct_password_user])
-@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад_из_формы'],
                                                      step_menu=['SEL_FORM']),
                            state=[StatesUsers.get_forms])
 async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=3)
     async with state.proxy() as data:
         await call.message.edit_text(f'Добро пожаловать в панель управления подрядчика\n'
                                      f'Вы авторизовались как {"<b>"}{data["user_name"]}{"</b>"}',
@@ -35,6 +36,7 @@ async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
                                                      step_menu=['SAVE_FORM']),
                            state=[StatesUsers.save_form])
 async def back_to_user_panel(call: CallbackQuery, state: FSMContext, callback_data: dict):
+    await call.answer(cache_time=3)
     async with state.proxy() as data:
         if callback_data.get('step_menu') == 'SAVE_FORM':
 
@@ -62,8 +64,8 @@ async def back_to_user_panel(call: CallbackQuery, state: FSMContext, callback_da
             for name_string in names_for_clean:
                 del data[name_string]
     await call.message.edit_text('Вы вернулись в меню Подрядчика', reply_markup=KBLines.get_start_panel_btn())
-    await state.reset_state()
     await StatesUsers.start_user_panel.set()
+
 
 ##########################
 #     ПОСМОТРЕТЬ ФОРМЫ
@@ -75,6 +77,7 @@ async def back_to_user_panel(call: CallbackQuery, state: FSMContext, callback_da
                                                      step_menu=["SEL_FORM"]),
                            state=[StatesUsers.get_form_with_name])
 async def get_forms_user(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=3)
     await StatesUsers.get_forms.set()
     async with state.proxy() as data:
         names_forms = CommandsDB.get_name_forms_with_user(data['user_name'])
@@ -87,12 +90,14 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext):
             data['name_forms'][num] = name
         await call.message.edit_text(text=msg_start + msg_text + msg_end,
                                      parse_mode=ParseMode.HTML,
-                                     reply_markup=KBLines.get_names_work_forms('SEL_FORM', [i for i in range(1, len(names_forms) + 1)]))
+                                     reply_markup=KBLines.get_names_work_forms('SEL_FORM', [i for i in range(1, len(names_forms) + 1)], names_forms))
+
 
 @dp.callback_query_handler(btn_names_msg.filter(name_btn=['Посмотреть'],
                                                 step_menu=["SEL_FORM"]),
                            state=[StatesUsers.get_forms])
 async def get_selected_form(call: CallbackQuery, state: FSMContext, callback_data: dict):
+    await call.answer(cache_time=3)
     await StatesUsers.get_form_with_name.set()
     async with state.proxy() as data:
         name_work = data['name_forms'][int(callback_data.get("name"))]
@@ -126,15 +131,16 @@ async def get_selected_form(call: CallbackQuery, state: FSMContext, callback_dat
                                      reply_markup=KBLines.panel_name_work('SEL_FORM'),
                                      parse_mode=ParseMode.MARKDOWN_V2)
 
+
 ##########################
 #     СОЗДАТЬ ФОРМУ
 ##########################
-
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Создать форму', 'Назад'],
                                                      step_menu=["Step_MAIN", 'ADD_NAME_WORK', "NAMES"]),
                            state=[StatesUsers.start_user_panel, StatesUsers.write_name_work,
                                   StatesUsers.select_name_work])
 async def create_form(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=3)
     async with state.proxy() as data:
         await StatesUsers.create_new_form.set()
         await call.message.edit_text('Заполнение формы \n Выберите следующий шаг',
@@ -147,6 +153,7 @@ async def create_form(call: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить имя']),
                            state=[StatesUsers.create_new_form])
 async def click_btn_add_name_work(call: CallbackQuery):
+    await call.answer(cache_time=1)
     await call.message.edit_text('Введите наименование работ', reply_markup=None)
     await StatesUsers.write_name_work.set()
 
@@ -192,14 +199,10 @@ async def add_name_work_in_db(call: CallbackQuery, state: FSMContext):
                            state=[StatesUsers.select_name_work])
 async def step_select_name_work(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=None)
-    names_work_db = [name[0] for name in CommandsDB.get_all_names_work()] if len(
-        CommandsDB.get_all_names_work()) > 0 else False
+    names_work_db = CommandsDB.get_all_names_work() if len(CommandsDB.get_all_names_work()) > 0 else False
     if names_work_db:
-        text_m = ''.join([f'{"<b>"}{name[0]}{"</b>"} -  {"<u>"}{"<b>"}{name[1]}{"</b>"}{"</u>"} \n' for name in
-                          CommandsDB.get_all_names_work()])
-        await call.message.answer(f'Выберите наименование работ\n и нажмите кнопку Продолжить\n'
-                                  f'Список наименований:\n' + text_m,
-                                  reply_markup=KBLines.get_names_one_msg("NAMES", names_work_db),
+        await call.message.answer(f'Выберите наименование работ\n и нажмите кнопку Продолжить\n',
+                                  reply_markup=KBLines.get_names_work_one_msg("NAMES", names_work_db),
                                   parse_mode="HTML")
         await StatesUsers.select_name_work.set()
     else:
@@ -235,15 +238,10 @@ async def accept_del_name_work(call: CallbackQuery, callback_data: dict, state: 
                                                  f'Успешно удалено.', show_alert=True)
             del data['name_work_del']
             del data['id_name_work_del']
-            names_work_db = [name[0] for name in CommandsDB.get_all_names_work()] if len(
-                CommandsDB.get_all_names_work()) > 0 else False
+            names_work_db = CommandsDB.get_all_names_work() if len(CommandsDB.get_all_names_work()) > 0 else False
             if names_work_db:
-                text_m = ''.join(
-                    [f'{"<b>"}{name[0]}{"</b>"} - {"<b>"}{name[1]}{"</b>"} \n' for name in
-                     CommandsDB.get_all_names_work()])
-                await call.message.answer(f'Выберите наименование работ\n и нажмите кнопку Продолжить\n'
-                                          f'Список наименований:\n' + text_m,
-                                          reply_markup=KBLines.get_names_one_msg("NAMES", names_work_db),
+                await call.message.answer(f'Выберите наименование работ\n и нажмите кнопку Продолжить\n',
+                                          reply_markup=KBLines.get_names_work_one_msg("NAMES", names_work_db),
                                           parse_mode="HTML")
                 await StatesUsers.select_name_work.set()
             else:
@@ -388,9 +386,7 @@ async def add_name_build_in_db(call: CallbackQuery, state: FSMContext):
                                   StatesUsers.step_level_build_work])
 async def select_build_work(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=None)
-    builds_work_db = [name[1] for name in CommandsDB.get_all_names_builds()] if len(
-        CommandsDB.get_all_names_builds()) > 0 else False
-
+    builds_work_db = CommandsDB.get_all_names_builds() if len(CommandsDB.get_all_names_builds()) > 0 else False
     if builds_work_db:
         await call.message.answer(f'Выберите здание\n и нажмите кнопку Продолжить',
                                   reply_markup=KBLines.get_names_one_msg("BUILDS", builds_work_db))
