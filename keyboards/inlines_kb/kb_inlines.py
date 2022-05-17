@@ -81,7 +81,8 @@ class KBLines:
         btn_del = InlineKeyboardButton(text='Удалить', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Удалить'
         ))
-        return InlineKeyboardMarkup(row_width=1).row(btn_edit, btn_del).row(btn_back)
+        # return InlineKeyboardMarkup(row_width=1).row(btn_edit, btn_del).row(btn_back)
+        return InlineKeyboardMarkup(row_width=1).row(btn_back)
 
     @staticmethod
     def get_names_one_msg(step_menu: str,
@@ -220,7 +221,8 @@ class KBLines:
         btn_exit = InlineKeyboardButton(text='Выйти', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Выйти'
         ))
-        return InlineKeyboardMarkup(row_width=2).row(btn_get_table).row(btn_add_user).row(btn_get_users).row(btn_exit)
+        # return InlineKeyboardMarkup(row_width=2).row(btn_get_table).row(btn_add_user).row(btn_get_users).row(btn_exit)
+        return InlineKeyboardMarkup(row_width=2).row(btn_add_user).row(btn_get_users).row(btn_exit)
 
     @staticmethod
     def get_names_users_one_msg(step_menu: str,
