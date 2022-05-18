@@ -20,6 +20,9 @@ from memory_FSM.bot_memory import StatesUsers, AuthorizationUser
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад_из_формы'],
                                                      step_menu=['SEL_FORM']),
                            state=[StatesUsers.get_forms])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+                                                     step_menu=['WRITE_FORM']),
+                           state=[StatesUsers.create_new_form])
 async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     async with state.proxy() as data:
@@ -143,8 +146,10 @@ async def create_form(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     async with state.proxy() as data:
         await StatesUsers.create_new_form.set()
-        await call.message.edit_text('Заполнение формы \n Выберите следующий шаг',
-                                     reply_markup=KBLines.step_name_work())
+        await call.message.edit_text('Перейдите по ссылке и заполните форму в GoogleForms:\n',
+                                     reply_markup=KBLines.btn_back('WRITE_FORM'))
+        # await call.message.edit_text('Перейдите по ссылке и заполните форму в GoogleForms:\n',
+        #                              reply_markup=KBLines.step_name_work())
 
 
 ###########################################
