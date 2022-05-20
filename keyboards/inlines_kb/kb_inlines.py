@@ -212,9 +212,6 @@ class KBLines:
         btn_get_table = InlineKeyboardButton(text='Выгрузить таблицу', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Выгрузить'
         ))
-        btn_add_link_form = InlineKeyboardButton(text='Изменить ссылку на форму', callback_data=menu_callback_user.new(
-            step_menu=f'{name_step}', name_btn='Ссылка_Ф'
-        ))
         btn_add_user = InlineKeyboardButton(text='Добавить пользователя', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Добавить_П'
         ))
@@ -225,7 +222,7 @@ class KBLines:
             step_menu=f'{name_step}', name_btn='Выйти'
         ))
         # return InlineKeyboardMarkup(row_width=2).row(btn_get_table).row(btn_add_user).row(btn_get_users).row(btn_exit)
-        return InlineKeyboardMarkup(row_width=2).row(btn_add_link_form).row(btn_add_user).row(btn_get_users).row(btn_exit)
+        return InlineKeyboardMarkup(row_width=2).row(btn_add_user).row(btn_get_users).row(btn_exit)
 
     @staticmethod
     def get_names_users_one_msg(step_menu: str,

@@ -57,7 +57,6 @@ async def authorization_step(message: types.Message, state: FSMContext):
                 await message.delete()
                 await message.answer(
                     f'Введён верный PINCODE\nВы хотите продолжить как: {"<b>"}{pin_cods[msg][0]}{"</b>"}?\n'
-                    f'Данный пользователь может добавлять/редактировать/удалять формы своей компании.\n'
                     f'Нажмите кнопку {"<b>"}Продолжить{"</b>"}, чтобы приступить к работе.\n'
                     f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
                     parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_USER'))

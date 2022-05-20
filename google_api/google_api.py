@@ -36,18 +36,11 @@ class GoogleFormApi():
     def service_form(self):
         return discovery.build('forms', 'v1', credentials=self.creeds)
 
-    def get_link_form(self):
-        """
-        Метод возвращает ссылку на актуальную форму
-        :return:
-        """
-        form_link = 'https://docs.google.com/forms/d/e/1FAIpQLSfj3nGZjk6T5sFKn7Cc1lMCLy7dlPOs4kEOe5EVVSaLClL08g/viewform?usp=sf_link'
-        return form_link
-
     def get_responses_form_user(self):
         return self.service_form().forms().responses().list(formId=self.form_id).execute()
 
+# ID SHEET 1kkqrJd_epesBO3rc0pViE3vwL8OwJhV7SI2McC0pyNY
 
 google_form = GoogleFormApi()
-print(google_form.get_link_form())
-print(google_form.get_responses_form_user())
+for line in google_form.get_responses_form_user().get('responses'):
+    print(line)
