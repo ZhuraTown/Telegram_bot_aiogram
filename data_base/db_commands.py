@@ -1,15 +1,21 @@
 from datetime import datetime
 from random import randint
+from typing import List, Dict, Union, Any
+
 from sqlalchemy import distinct, func
 from data_base.database import session
 
-from .models import User, TableNameWork, base, engine, TableNameBuild, TableWork
+from .models import User, TableNameWork, base, engine, TableNameBuild, TableWork, TableLinks
 
 
 class CommandsDB:
     @staticmethod
     def create_db():
         base.metadata.create_all(engine)
+        CommandsDB.add_link(
+            'google_form',
+            "https://docs.google.com/forms/d/e"
+            "/1FAIpQLSfj3nGZjk6T5sFKn7Cc1lMCLy7dlPOs4kEOe5EVVSaLClL08g/viewform?usp=sf_link")
 
     ##############################
     #       ПОЛЬЗОВАТЕЛИ
@@ -109,9 +115,29 @@ class CommandsDB:
             print(f"Удаление прошло успешно.Пользователь с ID {id}")
             session.commit()
 
-    # @staticmethod
-    # def get_count(name):
-    #     return session.query(TableNameWork.name_work).filter(TableNameWork.name_work == name).count()
+    ################################
+    #
+    ################################
+    @staticmethod
+    def add_link(name_link, link) -> bool:
+        try:
+            if session.query(TableLinks.link).filter(TableLinks.link == link).count() == 0:
+                session.add(TableLinks(name_link=name_link, link=link))
+                session.flush()
+                return True
+            else:
+                print(f"Ссылка  {link}, уже есть в БД")
+                return False
+        except:
+            session.rollback()
+            print(f'Ошибка записи {link} в БД')
+            return False
+        finally:
+            session.commit()
+
+    @staticmethod
+    def get_link(name_link) -> str:
+        return session.query(TableLinks.link).filter(TableLinks.name_link == name_link).one()[0]
 
     #################################
     #      НАИМЕНОВАНИЯ РАБОТ
@@ -225,7 +251,8 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def get_forms_with_user_with_name(user_name: str, name_work: str) -> dict:
+    def get_forms_with_user_with_name(user_name: str, name_work: str) -> list[
+        dict[str, Union[dict[str, list[Any]], Any]]]:
         TB = TableWork
 
         rows = session.query(TB.user_name, TB.name_work, TB.name_stage, TB.name_build, TB.name_level, TB.date_created,

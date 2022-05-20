@@ -146,7 +146,9 @@ async def create_form(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     async with state.proxy() as data:
         await StatesUsers.create_new_form.set()
-        await call.message.edit_text('Перейдите по ссылке и заполните форму в GoogleForms:\n',
+        link = CommandsDB.get_link('google_form')
+        await call.message.edit_text(f'Перейдите по ссылке и заполните форму в GoogleForms:\n'
+                                     f'{link}',
                                      reply_markup=KBLines.btn_back('WRITE_FORM'))
         # await call.message.edit_text('Перейдите по ссылке и заполните форму в GoogleForms:\n',
         #                              reply_markup=KBLines.step_name_work())

@@ -87,3 +87,20 @@ class TableNameBuild(base):
 
     def __repr__(self):
         return "<builds_work(build_id='{}', name_build='{}')".format(self.build_id, self.name_build)
+
+
+class TableLinks(base):
+    __tablename__ = 'links'
+
+    link_id = Column(Integer,
+                     primary_key=True,
+                     autoincrement=True)
+    name_link = Column(String,
+                       unique=True,
+                       comment='Наименование ссылки')
+    link = Column(String, unique=True, comment='Ссылка')
+    comment_link = Column(String, default='Комментарий не добавлен')
+
+    def __repr__(self):
+        return "<links(name_link='{}', link='{}', comment_link='{}')>". \
+            format(self.name_link, self.link, self.comment_link)
