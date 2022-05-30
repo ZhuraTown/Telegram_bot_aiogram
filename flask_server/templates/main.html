@@ -4,60 +4,50 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
-<!--    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">-->
     <link rel="stylesheet" href="../static/style.css">
-    <title>Bootstrap demo</title>
+    <title>Табель времени</title>
   </head>
   <body>
-  <div class="main_body">
-    <div class="first_1">
-      <div id="header">
-        <p>ЛИИС/АМР</p>
-        <table border="1", cellpadding="1">
-          <tr>
-            <th colspan="3", rowspan="3"> 27.05.2022</th>
-            <th colspan="4">ЛИИС/АМР</th>
-          </tr>
-          <tr>
-            <th colspan="4"> Электрика (ЭОМ, СГП) </th>
-          </tr>
-          <tr>
-            <th colspan="2"> Рабочие</th>
-            <th colspan="2"> ИТР</th>
-          </tr>
-          <tr>
-            <th>Этап</th>
-            <th>Здание</th>
-            <th>Этаж</th>
-            <th>П</th>
-            <th>Ф</th>
-            <th>П</th>
-            <th>Ф</th>
-          </tr>
+    <div class="container">
+        <div class="navbar-header">
+            <h1 class="text-center  text-uppercase text-primary">
+                <small> ЛИИС/АМР</small>
+            </h1>
 
-        </table>
-      </div>
-      <div class="title_table">
-      </div>
-    </div>
-      <form>
-        <div id="string">
-          <label for="stage"></label><input type="text" id="stage", size="5">
-          <label for="build"></label><input type="text" id="build", size="5">
-          <label for="level"></label><input type="text" id="level", size="5">
-          <label for="work_p"></label><input type="text" id="work_p", size="2">
-          <label for="work_f"></label><input type="text" id="work_f", size="2">
-          <label for="itr_p"></label><input type="text" id="itr_p", size="2">
-          <label for="itr_f"></label><input type="text" id="itr_f", size="2">
+            <h2 class="text-center  text-uppercase text-danger">
+                <small> 29.05.2022</small>
+            </h2>
+            <h2 class="text-center  text-uppercase text-primary">
+                <small> "Электрика (ЭОМ,СГП)"</small>
+            </h2>
+        <form role="form" id="form">
+            <div class="form-group" id="first">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Этап">
+                    <input type="text" class="form-control" placeholder="Этаж">
+                    <input type="text" class="form-control" placeholder="Здание">
+                </div>
+                <div class="input-group">
+                    <input type="number" class="form-control" placeholder="Деж.П">
+                    <input type="number" class="form-control" placeholder="Деж.Ф">
+                    <input type="number" class="form-control" placeholder="ИТР.П">
+                    <input type="number" class="form-control" placeholder="ИТР.Ф">
+                </div>
+                <div class="line-separator"></div>
+            </div>
+        </form>
+            <div class="buttons">
+                <input type="button" value="Добавить" class="btn btn-primary" id="btn-add-str" onclick="add_str();">
+                <input type="button" value="Удалить" class="btn btn-danger" id="clear">
+            </div>
+            <div>
+                <div class="send-form">
+                <input type="button" value="Отправить" class="btn btn-primary">
+                </div>
+            </div>
         </div>
-<!--        <label for="lastname">Last Name</label>-->
-<!--        <input type="text" id="lastname">-->
-<!--        <label for="lastname">Last Name</label>-->
-<!--        <label>Last Name<input type="text" name="lastname"></label>-->
-<!--      </form>-->
     </div>
-
-  </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+  <script src="../static/js/button.js"></script>
   </body>
 </html>

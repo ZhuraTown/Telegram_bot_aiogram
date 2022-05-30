@@ -1,55 +1,53 @@
 
 
-html {
-  box-sizing: border-box;
-}
-
-#header {
-    margin-top: 12px;
-    background-color: #fff;
-    border: 1px solid #dadce0;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    padding: 24px;
-    padding-top: 22px;
-    position: relative;
-}
-
-#header p {
-    font-size: 15px;
-    align-content: center;
-}
-
-table {
-    width: 100%;
-    border-spacing: 2px;
-    border-collapse: collapse;
-}
-table th {
-    alignt: center;
-}
-.main_body {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-}
-
-
-user agent stylesheet
-div {
-    display: block;
-}
-
 body {
     background-color: #ede7f6;
     font-family: Roboto,RobotoDraft,Helvetica,Arial,sans-serif;
     margin: 0;
 }
 
-*,
-*:before,
-*:after {
-  box-sizing: inherit;
+div.line-separator {
+    height: 10px;
 }
+
+div.del-line {
+    margin: 5px;
+    text-align: right;
+}
+
+div.buttons {
+    margin: 5px;
+    text-align: center;
+}
+
+div.send-form {
+    margin: 10px;
+    text-align: center;
+}
+
+
+
+input.btn-del-str {
+    color: #66625b;
+    margin: 5px;
+    background: #FFFFFF;
+    text-decoration: none;
+    padding: .05em .5em;
+    border-radius: 6px;
+    border: 0;
+    height: 35px;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+
+}
+
+input.btn-del-str:hover {
+    background: #dbd9d5;
+    color: #66625b;
+}
+
+input.btn-del-str:active {
+     background: #dbd9d5;
+     color: #66625b;
+     border: 1px #66625b solid;
+}
+
