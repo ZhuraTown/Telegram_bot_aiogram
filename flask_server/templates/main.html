@@ -20,18 +20,18 @@
             <h2 class="text-center  text-uppercase text-primary">
                 <small> "Электрика (ЭОМ,СГП)"</small>
             </h2>
-        <form role="form" id="form">
+        <form action="" id="form_timesheet" method="post">
             <div class="form-group" id="first">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Этап">
-                    <input type="text" class="form-control" placeholder="Этаж">
-                    <input type="text" class="form-control" placeholder="Здание">
+                    <input type="text" class="form-control" placeholder="Этап" name="stage">
+                    <input type="text" class="form-control" placeholder="Этаж" name="level">
+                    <input type="text" class="form-control" placeholder="Здание" name="build">
                 </div>
                 <div class="input-group">
-                    <input type="number" class="form-control" placeholder="Деж.П">
-                    <input type="number" class="form-control" placeholder="Деж.Ф">
-                    <input type="number" class="form-control" placeholder="ИТР.П">
-                    <input type="number" class="form-control" placeholder="ИТР.Ф">
+                    <input type="number" class="form-control" placeholder="Деж.П" name="dej_p">
+                    <input type="number" class="form-control" placeholder="Деж.Ф" name="dej_f">
+                    <input type="number" class="form-control" placeholder="ИТР.П" name="itr_p">
+                    <input type="number" class="form-control" placeholder="ИТР.Ф" name="itr_f">
                 </div>
                 <div class="line-separator"></div>
             </div>
@@ -42,7 +42,7 @@
             </div>
             <div>
                 <div class="send-form">
-                <input type="button" value="Отправить" class="btn btn-primary">
+                <input form="form_timesheet" type="submit" value="Отправить" class="btn btn-primary">
                 </div>
             </div>
         </div>

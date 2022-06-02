@@ -1,0 +1,174 @@
+
+
+#title-container {
+    top: 38px;
+    background-color: #FFFFFF;
+    align-items: flex-start;
+    isolation: isolate;
+    border-radius: 16px;
+    padding-top: 24px;
+    padding-left: 24px;
+    padding-bottom: 28px;
+
+    max-width: 500px;
+}
+
+#title {
+
+    color: #797979;
+    font-style: normal;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 700;
+    font-family: 'Roboto', sans-serif;
+}
+
+#company {
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 42px;
+    padding-top: 10px;
+}
+
+#date {
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 19px;
+    padding-top: 10px;
+}
+
+#name_work {
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 19px;
+}
+
+#place_sheet {
+    padding-top: 16px;
+    max-width: 500px;
+}
+
+#form_container {
+    padding: 16px 16px 16px;
+    border: 1px solid #D0D5EC;
+    border-radius: 16px;
+}
+
+#build {
+    background: #FFFFFF;
+    color: #797979;
+    padding: 16px;
+    border-radius: 12px;
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 20px;
+}
+
+.workers {
+    margin-top: 16px;
+}
+
+.only-block {
+    font-family: 'Roboto',sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+    color: #797979;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.input_inline {
+    padding-top: 8px;
+    display:  flex;
+}
+
+.right-block {
+    margin-left: 4px;
+}
+
+.left-block {
+    margin-right: 4px;
+}
+
+.workers h4 {
+    color: #384069;
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 21px;
+    margin-bottom: 0;
+}
+
+.delete {
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 20px;
+    color: #6B739A;
+    padding-left: 270px;
+    padding-right: 16px;
+
+}
+
+.button-delete {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    border-radius: 12px;
+}
+
+.btn-add {
+    background: #DEE1F3;
+    border-radius: 12px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-top: 16px;
+    padding: 16px;
+}
+.btn-add input {
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 20px;
+    color: #384069;
+}
+
+.btn-send {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    background: #8C72D5;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    gap: 10px;
+}
+
+.btn-send input {
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 20px;
+    color: #FFFFFF;
+}

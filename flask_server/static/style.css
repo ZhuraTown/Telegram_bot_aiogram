@@ -1,7 +1,7 @@
 
 
 body {
-    background-color: #ede7f6;
+    background-color: #EBECF9;
     font-family: Roboto,RobotoDraft,Helvetica,Arial,sans-serif;
     margin: 0;
 }
@@ -50,4 +50,3 @@ input.btn-del-str:active {
      color: #66625b;
      border: 1px #66625b solid;
 }
-
