@@ -1,35 +1,114 @@
 
 function add_str() {
-    const element = document.getElementById("form_timesheet");
-    var element_2 = document.createElement('div')
-    var id_form = document.getElementById('form')
+    const form = document.getElementById("form_timesheet");
+    const number_form = document.querySelectorAll('#form_container').length
+    const id_form = 'form_' + number_form
+    let new_form = document.createElement('div')
+    let id_select = 'select_' + number_form
+    new_form.id =  id_form
+    const form_part_1 =  '<div class="container form-box" id="form_container">\n' +
+        '            <div class="form-group">\n' +
+        '                <div class="build_stage_level">\n' +
+        '                <div class="input_build">\n'
 
-    element_2.innerHTML = '<div class="form-group">\n' +
-        '                    <div class="input-group">\n' +
-        '                        <input type="text" class="form-control" placeholder="Этап" name="stage">\n' +
-        '                        <input type="text" class="form-control" placeholder="Этаж" name="level">\n' +
-        '                        <input type="text" class="form-control" placeholder="Здание" name="build">\n' +
+    let form_part_2 = `<select name="select" class="build-select" id="${id_select}"><option selected value="">Здание</option></select>`
+    const form_part_3 = '</div>\n' +
+        '                    <div class="input_inline">\n' +
+        '                        <div class="left-block" >\n' +
+        '                            <input type="text" class="form-control only-block" placeholder="Этаж" name="level" id="level">\n' +
+        '                        </div>\n' +
+        '                        <div class="right-block">\n' +
+        '                            <input type="number" class="form-control only-block" placeholder="Этап" name="stage" id="stage">\n' +
+        '                        </div>\n' +
         '                    </div>\n' +
-        '                    <div class="input-group">\n' +
-        '                        <input type="number" class="form-control" placeholder="Деж.П" name="dej_p">\n' +
-        '                        <input type="number" class="form-control" placeholder="Деж.Ф" name="dej_f">\n' +
-        '                        <input type="number" class="form-control" placeholder="ИТР.П" name="itr_p">\n' +
-        '                        <input type="number" class="form-control" placeholder="ИТР.Ф" name="itr_f">\n' +
         '                    </div>\n' +
-        '                            <div class="line-separator"></div>' +
-        '                </div>'
-
-    element.append(element_2)
+        '                <div class="workers">\n' +
+        '                    <h4>Рабочие</h4>\n' +
+        '                    <div class="input_inline">\n' +
+        '                        <div class="left-block" >\n' +
+        '                            <input type="number" class="form-control only-block" placeholder="Плановый" name="worker_p" id="worker_p">\n' +
+        '                        </div>\n' +
+        '                        <div class="right-block">\n' +
+        '                            <input type="number" class="form-control only-block" placeholder="Фактический" name="worker_f" id="worker_f">\n' +
+        '                        </div>\n' +
+        '                    </div>\n' +
+        '                </div>\n' +
+        '                <div class="workers">\n' +
+        '                    <h4>ИТР</h4>\n' +
+        '                    <div class="input_inline">\n' +
+        '                        <div class="left-block" >\n' +
+        '                            <input type="number" class="form-control only-block" placeholder="Плановый" name="itr_p" id="itr_p">\n' +
+        '                        </div>\n' +
+        '                        <div class="right-block">\n' +
+        '                            <input type="number" class="form-control only-block" placeholder="Фактический" name="itr_f" id="itr_f">\n' +
+        '                        </div>\n' +
+        '                    </div>\n' +
+        '                </div>\n' +
+        '                <div class="workers">\n' +
+        '                    <h4>Охрана</h4>\n' +
+        '                    <div class="input_inline">\n' +
+        '                        <div class="left-block" >\n' +
+        '                            <input type="number" class="form-control only-block" placeholder="Плановый" name="sec_p" id="sec_p">\n' +
+        '                        </div>\n' +
+        '                        <div class="right-block">\n' +
+        '                            <input type="number" class="form-control only-block" placeholder="Фактический" name="sec_f" id="sec_f">\n' +
+        '                        </div>\n' +
+        '                    </div>\n' +
+        '                </div>\n' +
+        '                <div class="workers">\n' +
+        '                    <h4>Дежурный</h4>\n' +
+        '                    <div class="input_inline">\n' +
+        '                        <div class="left-block" >\n' +
+        '                            <input type="number" class="form-control only-block" placeholder="Плановый" name="duty_p" id="duty_p">\n' +
+        '                        </div>\n' +
+        '                        <div class="right-block">\n' +
+        '                            <input type="number" class="form-control only-block" placeholder="Фактический" name="duty_f" id="duty_f">\n' +
+        '                        </div>\n' +
+        '                    </div>\n' +
+        '                </div>\n' +
+        '                <div class="button-delete">'
+    let form_part_4 = `<input type="button" value="Удалить" class="btn delete" id="clear" onclick="del_form('${id_form}');"></div></div></div>`
+    new_form.innerHTML = form_part_1 + form_part_2 + form_part_3+ form_part_4
+    form.append(new_form)
+    getResponseName(id_select)
 }
 
-let base = document.getElementById('form_timesheet')
-let but_del = document.getElementById('clear')
+function del_form(id_form) {
+    let form_delete = document.getElementById(id_form)
+    form_delete.remove()
+}
 
-but_del.addEventListener('click', ClearFunction)
-
-function ClearFunction() {
-    if (base.lastChild.id === '') {
-        base.removeChild(base.lastChild)
+async function getResponse(){
+        function addOption(key, value) {
+        let newOption = new Option(value, key)
+        build.append(newOption)
+    }
+    // let response = await fetch("http://127.0.0.1:5000/builds",{
+    let response = await fetch("https://16ce-94-19-112-97.eu.ngrok.io/builds",{
+        method: "GET"
+    } ).then(response => response.json())
+    for(let key in response){
+        addOption(key, response[key])
     }
 }
+
+getResponse()
+
+async function getResponseName(id_select){
+    function addOption(key, value) {
+        let newOption = new Option(value, key)
+        let select = document.getElementById(id_select)
+        select.append(newOption)
+    }
+    // let response = await fetch("http://127.0.0.1:5000/builds",{
+    let response = await fetch("https://16ce-94-19-112-97.eu.ngrok.io/builds",{
+        method: "GET"
+    } ).then(response => response.json())
+    for(let key in response){
+        addOption(key, response[key])
+}
+}
+
+
+
 

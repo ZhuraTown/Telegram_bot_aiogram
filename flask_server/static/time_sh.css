@@ -54,10 +54,11 @@
     max-width: 500px;
 }
 
-#form_container {
+.form-box {
     padding: 16px 16px 16px;
     border: 1px solid #D0D5EC;
     border-radius: 16px;
+    margin-bottom: 16px;
 }
 
 #build {
@@ -70,6 +71,22 @@
     font-weight: 400;
     font-size: 18px;
     line-height: 20px;
+    max-width: 500px;
+    width: 100%;
+}
+
+.build-select {
+    background: #FFFFFF;
+    color: #797979;
+    padding: 16px;
+    border-radius: 12px;
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 20px;
+    max-width: 500px;
+    width: 100%;
 }
 
 .workers {

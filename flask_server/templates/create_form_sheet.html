@@ -16,19 +16,21 @@
       <h5 id="name_work">ЭЛЕКТРИКА (ЭОМ,СГП)</h5>
   </div>
   <div class="container" id="place_sheet">
-    <div class="container" id="form_container">
-        <form action="" id="form_timesheet" method="post">
-            <div class="form-group" id="first">
+      <form action="" id="form_timesheet" method="post">
+          <div class="container form-box" id="form_container">
+            <div class="form-group">
                 <div class="build_stage_level">
                 <div class="input_build">
-                    <input type="text" class="form-control" placeholder="Здание" name="build" id="build">
+                    <select name="select" id="build">
+                        <option selected value="">Здание</option>
+                    </select>
                 </div>
                     <div class="input_inline">
                         <div class="left-block" >
                             <input type="text" class="form-control only-block" placeholder="Этаж" name="level" id="level">
                         </div>
                         <div class="right-block">
-                            <input type="text" class="form-control only-block" placeholder="Этап" name="stage" id="stage">
+                            <input type="number" class="form-control only-block" placeholder="Этап" name="stage" id="stage">
                         </div>
                     </div>
                     </div>
@@ -76,12 +78,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="button-delete">
-                <input type="button" value="Удалить" class="btn delete" id="clear">
-                </div>
             </div>
+          </div>
         </form>
-        </div>
         <div class="btn-add">
             <input type="button" value="Добавить" class="btn" id="btn-add" onclick="add_str();">
         </div>

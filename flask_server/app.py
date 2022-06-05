@@ -1,4 +1,6 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
+from data_base.db_commands import CommandsDB
+
 
 app = Flask(__name__)
 
@@ -7,6 +9,13 @@ app = Flask(__name__)
 def create_form():
     return render_template('create_form.html')
 
+
+@app.route('/builds', methods=['GET'])
+def get_builds():
+    builds = {}
+    for build in CommandsDB.get_all_names_builds():
+        builds[build[0]] = build[1]
+    return jsonify(builds)
 
 
 @app.route('/', methods=['GET', "POST"])
@@ -22,9 +31,9 @@ def main_page():
         return render_template('create_form_sheet.html')
 
 
-@app.route('/user/<string:username>')
-def page_user(username):
-    return render_template('index.html', username=username)
+@app.route('/get')
+def page_user():
+    return render_template('my_get.html')
 
 
 if __name__ == '__main__':

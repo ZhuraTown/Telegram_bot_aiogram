@@ -277,3 +277,4 @@ class CommandsDB:
     def get_name_forms_with_user(user_name):
         TB = TableWork
         return [name.name_work for name in session.query(TB.name_work).filter(TB.user_name == user_name).distinct().all()]
+
