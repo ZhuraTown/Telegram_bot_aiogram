@@ -251,10 +251,8 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def get_forms_with_user_with_name(user_name: str, name_work: str) -> list[
-        dict[str, Union[dict[str, list[Any]], Any]]]:
+    def get_forms_with_user_with_name(user_name: str, name_work: str) -> List[Dict[str, Union[Dict[str, List[Any]], Any]]]:
         TB = TableWork
-
         rows = session.query(TB.user_name, TB.name_work, TB.name_stage, TB.name_build, TB.name_level, TB.date_created,
                              TB.number_security_p, TB.number_security_f, TB.number_duty_p, TB.number_duty_f,
                              TB.number_worker_p, TB.number_worker_f, TB.number_ITR_p, TB.number_ITR_f,
