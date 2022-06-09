@@ -215,6 +215,9 @@ class KBLines:
         btn_add_user = InlineKeyboardButton(text='Добавить пользователя', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Добавить_П'
         ))
+        btn_builds = InlineKeyboardButton(text='Здания', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Здания'
+        ))
         btn_get_users = InlineKeyboardButton(text='Пользователи', callback_data=menu_callback_user.new(
             step_menu=f'{name_step}', name_btn='Пользователи'
         ))
@@ -222,7 +225,7 @@ class KBLines:
             step_menu=f'{name_step}', name_btn='Выйти'
         ))
         # return InlineKeyboardMarkup(row_width=2).row(btn_get_table).row(btn_add_user).row(btn_get_users).row(btn_exit)
-        return InlineKeyboardMarkup(row_width=2).row(btn_add_user).row(btn_get_users).row(btn_exit)
+        return InlineKeyboardMarkup(row_width=2).row(btn_add_user).row(btn_get_users).row(btn_builds).row(btn_exit)
 
     @staticmethod
     def get_names_users_one_msg(step_menu: str,
@@ -252,6 +255,20 @@ class KBLines:
             step_menu=f'{step_menu}', name_btn='Назад'
         ))
         kb_inline.row(btn_back)
+        return kb_inline
+
+    @staticmethod
+    def get_all_builds(name_step: str, names_build_from_db: list):
+        kb_inline = InlineKeyboardMarkup(row_width=2)
+        btn_add_build = InlineKeyboardButton(text='Добавить', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Добавить'))
+        btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
+            step_menu=f'{name_step}', name_btn='Назад'))
+        for name in names_build_from_db:
+            btn_name_build = InlineKeyboardButton(text=f'{name[1]}', callback_data=btn_names_msg.new(
+                step_menu=name_step, name=f'{name[0]}', name_btn='Здание'))
+            kb_inline.row(btn_name_build)
+        kb_inline.row(btn_add_build, btn_back)
         return kb_inline
 
     @staticmethod

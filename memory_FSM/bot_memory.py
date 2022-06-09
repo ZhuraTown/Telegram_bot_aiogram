@@ -11,6 +11,11 @@ class StatesAdminUser(StatesGroup):
     get_info_users = State()
     del_user = State()
 
+    builds = State()
+    build = State()
+
+    write_build = State()
+
     edit_user = State()
 
     edit_user_name = State()
