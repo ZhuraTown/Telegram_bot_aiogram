@@ -51,6 +51,7 @@ async def authorization_step(message: types.Message, state: FSMContext):
                     f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
                     parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_ADMIN'))
                 data['user_name'] = pin_cods[msg][0]
+                data['id_user'] = pin_cods[msg][2]
                 await AuthorizationUser.correct_password_admin.set()
 
             else:
@@ -61,6 +62,7 @@ async def authorization_step(message: types.Message, state: FSMContext):
                     f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
                     parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_USER'))
                 data['user_name'] = pin_cods[msg][0]
+                data['id_user'] = pin_cods[msg][2]
                 await AuthorizationUser.correct_password_user.set()
     else:
         await message.answer('Такого PINCODE нету в системе. Уточните свой пароль')

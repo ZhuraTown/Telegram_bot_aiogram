@@ -18,7 +18,7 @@ from memory_FSM.bot_memory import StatesAdminUser, AuthorizationUser
                                                      step_menu=['AUTH_ADMIN']),
                            state=[AuthorizationUser.correct_password_admin])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-                                                     step_menu=['A_P_USERS', "NAME_USER", "BUILDS"]),
+                                                     step_menu=['A_P_USERS', "BUILDS"]),
                            state=[StatesAdminUser.get_info_users,
                                   StatesAdminUser.user_name_correct, StatesAdminUser.builds])
 async def cmd_admin_panel(call: CallbackQuery, state: FSMContext):
@@ -119,13 +119,12 @@ async def add_name_build_in_db(call: CallbackQuery, state: FSMContext):
                                                      step_menu=['DEL_USER']),
                            state=[StatesAdminUser.del_user])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-                                                     step_menu=['CHANGE_USER']),
-                           state=[StatesAdminUser.edit_user])
+                                                     step_menu=['CHANGE_USER', "NAME_USER"]),
+                           state=[StatesAdminUser.edit_user, StatesAdminUser.user_name_correct])
 async def get_information_companies(call: CallbackQuery):
     await bot.answer_callback_query(call.id)
     companies = CommandsDB.get_all_users()
-    await call.message.edit_text(f'Пользователи. Можно редактировать наименование и PINCODE\n'
-                                 f'Можно удалить подрядчика',
+    await call.message.edit_text(f'Можно редактировать/добавлять Компании',
                                  reply_markup=KBLines.get_names_users_one_msg('A_P_USERS', companies))
     await StatesAdminUser.get_info_users.set()
 
@@ -179,7 +178,7 @@ async def change_user(call: CallbackQuery, callback_data: dict, state: FSMContex
     else:
         await bot.answer_callback_query(call.id)
         async with state.proxy() as data:
-            name_user = callback_data['name']
+            name_user = CommandsDB.get_user_with_id(callback_data['name'])[0][0]
             data['edit_user'] = name_user
             await StatesAdminUser.edit_user.set()
             await call.message.edit_text(f'Выбранная компания: {"<b>"}{name_user}{"</b>"}\n'
@@ -284,16 +283,13 @@ async def save_new_pin_user(call: CallbackQuery, state: FSMContext):
 # Создание нового пользователя
 ###############################
 
-@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить_П'],
-                                                     step_menu=['ADMIN_PANEL']),
-                           state=[StatesAdminUser.start_admin_panel])
-@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить_П'],
-                                                     step_menu=['ADMIN_PANEL']),
-                           state=[StatesAdminUser.start_admin_panel])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить'],
+                                                     step_menu=['A_P_USERS']),
+                           state=[StatesAdminUser.get_info_users])
 async def create_new_user(call: CallbackQuery):
     await bot.answer_callback_query(call.id, cache_time=5)
     await call.message.edit_text(f'Создать нового пользователя\n'
-                                 f'Длина не более 18 символов', reply_markup=None)
+                                 f'Кнопка Назад появится после ввода любого текста', reply_markup=None)
     await StatesAdminUser.write_user_name.set()
 
 

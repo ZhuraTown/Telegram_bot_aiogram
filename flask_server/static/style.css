@@ -25,7 +25,9 @@ div.send-form {
     text-align: center;
 }
 
-
+input:read-only {
+    border: none;
+}
 
 input.btn-del-str {
     color: #66625b;

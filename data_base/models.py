@@ -1,5 +1,7 @@
+from datetime import datetime
+
 from sqlalchemy import (Column, Integer, BigInteger, String, Sequence,
-                        TIMESTAMP, Boolean, JSON, ForeignKey, Date, DateTime)
+                        TIMESTAMP, Boolean, JSON, ForeignKey, Date, DateTime, func)
 
 from data_base.database import base, engine
 
@@ -44,7 +46,7 @@ class TableWork(base):
     number_worker_f = Column(Integer, default=0, comment='Рабочий Факт')
     number_ITR_p = Column(Integer, default=0, comment='ИТР План')
     number_ITR_f = Column(Integer, default=0, comment='ИТР Факт')
-    date_created = Column(Date, comment='Дата создания')
+    date_created = Column(Date(), server_default=func.now(), comment='Дата создания')
 
     def __repr__(self):
         return '<TableWork(user_id="{}", name_work="{}",name_stage="{}", name_build="{}", ' \
@@ -64,15 +66,17 @@ class TableWork(base):
 class TableNameWork(base):
     __tablename__ = 'names_work'
 
-    work_name_id = Column(Integer,
-                          unique=True,
-                          primary_key=True,
-                          autoincrement=True
-                          )
-    name_work = Column(String, comment='Наименование работ')
+    work_id = Column(Integer,
+                     unique=True,
+                     primary_key=True,
+                     autoincrement=True
+                     )
+    user_id = Column(Integer, comment='Пользователь, добавивший наименование')
+    work_name = Column(String, comment='Наименования работ')
 
     def __repr__(self):
-        return "<TableNameWork(user_id='{}', name_work='{}')".format(self.work_name_id, self.name_work)
+        return "<TableNameWork(work_name='{}', owner_id='{}', work_id='{}')".\
+            format(self.work_name, self.owner_id, self.work_id)
 
 
 class TableNameBuild(base):
@@ -87,20 +91,3 @@ class TableNameBuild(base):
 
     def __repr__(self):
         return "<builds_work(build_id='{}', name_build='{}')".format(self.build_id, self.name_build)
-
-
-class TableLinks(base):
-    __tablename__ = 'links'
-
-    link_id = Column(Integer,
-                     primary_key=True,
-                     autoincrement=True)
-    name_link = Column(String,
-                       unique=True,
-                       comment='Наименование ссылки')
-    link = Column(String, unique=True, comment='Ссылка')
-    comment_link = Column(String, default='Комментарий не добавлен')
-
-    def __repr__(self):
-        return "<links(name_link='{}', link='{}', comment_link='{}')>". \
-            format(self.name_link, self.link, self.comment_link)
