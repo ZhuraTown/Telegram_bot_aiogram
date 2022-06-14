@@ -156,6 +156,10 @@ class CommandsDB:
         row = session.query(TableNameWork.work_name).filter(TableNameWork.work_id == id_name).one()
         return row[0]
 
+    @staticmethod
+    def get_name_work_id_for_work_name(work_name):
+        row = session.query(TableNameWork.work_id).filter(TableNameWork.work_name == work_name).one()
+        return row[0]
     ##################################
     #             ЗДАНИЯ
     #################################
@@ -241,10 +245,10 @@ class CommandsDB:
         return rows
 
     @staticmethod
-    def get_name_forms_with_user(user_name):
+    def get_name_forms_with_user_with_date(user_name, date):
         TB = TableWork
         return [name.name_work for name in
-                session.query(TB.name_work).filter(TB.user_name == user_name).distinct().all()]
+                session.query(TB.name_work).filter(TB.user_name == user_name, TB.date_created == date).distinct().all()]
 
     @staticmethod
     def del_str_forms_with_name_work_user(user: str, name_work: str):

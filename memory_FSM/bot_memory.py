@@ -42,6 +42,7 @@ class StatesUsers(StatesGroup):
 
     get_forms = State()  # Просмотреть формы
     get_form_with_name = State()
+    edit_form = State()
 
     write_name_work = State()  # Добавить наименование работ
     select_name_work = State()  # Выбрать наименование работ

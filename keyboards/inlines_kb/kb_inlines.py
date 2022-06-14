@@ -56,16 +56,15 @@ class KBLines:
         return InlineKeyboardMarkup(row_width=2).row(btn_save).row(btn_back)
 
     @staticmethod
-    def get_names_work_forms(step_menu: str, num_work_from_db: list, name_forms: list):
-        # TODO выводит список с именами работ, кнопки Редактировать Просмотреть
+    def get_names_work_forms(step_menu: str, names_form: dict):
         # Кнопка назад
         kb_inline = InlineKeyboardMarkup(row_width=2)
-        for name, num in zip(name_forms, num_work_from_db):
-            btn_name_work = InlineKeyboardButton(text=f'{name}', callback_data=btn_names_msg.new(
-                step_menu=step_menu, name=f'{num}', name_btn='Посмотреть'))
+        for key, value in names_form.items():
+            btn_name_work = InlineKeyboardButton(text=f'{key}', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{value}', name_btn='Форма'))
             kb_inline.row(btn_name_work)
         btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
-            step_menu=f'{step_menu}', name_btn='Назад_из_формы'
+            step_menu=f'{step_menu}', name_btn='Назад'
         ))
         kb_inline.row(btn_back)
         return kb_inline

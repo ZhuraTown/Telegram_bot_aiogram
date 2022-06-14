@@ -1,3 +1,5 @@
+import datetime
+
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, ParseMode
@@ -9,19 +11,16 @@ from keyboards.inlines_kb.kb_inlines import KBLines
 from memory_FSM.bot_memory import StatesUsers, AuthorizationUser
 from flask_server.generator_url import GeneratorUrlFlask
 
+
 ########################
 #      ГЛАВНОЕ МЕНЮ
 ########################
-
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
                                                      step_menu=['AUTH_USER']),
                            state=[AuthorizationUser.correct_password_user])
-@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад_из_формы'],
-                                                     step_menu=['SEL_FORM']),
-                           state=[StatesUsers.get_forms])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-                                                     step_menu=['WRITE_FORM']),
-                           state=[StatesUsers.create_new_form])
+                                                     step_menu=['WRITE_FORM', "SEE_FORM"]),
+                           state=[StatesUsers.create_new_form, StatesUsers.get_forms])
 async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     async with state.proxy() as data:
@@ -44,19 +43,28 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     await StatesUsers.get_forms.set()
     async with state.proxy() as data:
-        names_forms = CommandsDB.get_name_forms_with_user(data['user_name'])
-        msg_start = f'Созданные формы: \n'
-        msg_text = ''
-        msg_end = ''
-        data['name_forms'] = {}
-        for name, num in zip(names_forms, range(1, len(names_forms) + 1)):
-            msg_text += f'{"<b>"}{num}{"</b>"} - {name}\n'
-            data['name_forms'][num] = name
-        await call.message.edit_text(text=msg_start + msg_text + msg_end,
+        date = datetime.datetime.today().date()
+        names_forms = CommandsDB.get_name_forms_with_user_with_date(data['user_name'], date)
+        works_with_ids = {}
+        for name_form in names_forms:
+            works_with_ids[name_form] = CommandsDB.get_all_names_work_with_user_id(data['id_user'])[0].work_id
+        await call.message.edit_text(f"Созданные формы за {'<b>'}{date}{'</b>'}",
                                      parse_mode=ParseMode.HTML,
-                                     reply_markup=KBLines.get_names_work_forms('SEL_FORM', [i for i in range(1,
-                                                                                                             len(names_forms) + 1)],
-                                                                               names_forms))
+                                     reply_markup=KBLines.get_names_work_forms('SEE_FORM', works_with_ids))
+
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Форма'],
+                                                     step_menu=["SEE_FORM"]),
+                           state=[StatesUsers.get_forms])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+                                                     step_menu=["SEL_FORM"]),
+                           state=[StatesUsers.get_form_with_name])
+async def get_forms_user(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=3)
+    await StatesUsers.edit_form.set()
+    async with state.proxy() as data:
+        date = datetime.datetime.today().date()
+        company = data['user_name']
 
 
 ##########################

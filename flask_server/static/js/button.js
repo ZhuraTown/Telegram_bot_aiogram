@@ -1,4 +1,7 @@
+// import { URL_WORK_BUILDS } from '../../../constants'
+
 const URL_WORK_BUILDS = "http://127.0.0.1:5000/builds"
+
 
 function add_str() {
     const form = document.getElementById("form_timesheet");
@@ -108,6 +111,11 @@ async function getResponseName(id_select){
     }
     }
 
+    // const btn = document.querySelector('.btn-add')
+    // btn.addEventListener('click', () => {
+    //     console.log('hey')
+    //     add_str();
+    // })
 
 getResponse()
 
