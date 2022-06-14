@@ -37,8 +37,8 @@ async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
                                                      step_menu=["Step_MAIN"]),
                            state=[StatesUsers.start_user_panel])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-                                                     step_menu=["SEL_FORM"]),
-                           state=[StatesUsers.get_form_with_name])
+                                                     step_menu=["SEL_FORM", "EDIT_FORM"]),
+                           state=[StatesUsers.get_form_with_name, StatesUsers.edit_form])
 async def get_forms_user(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     await StatesUsers.get_forms.set()
@@ -53,18 +53,20 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext):
                                      reply_markup=KBLines.get_names_work_forms('SEE_FORM', works_with_ids))
 
 
-@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Форма'],
-                                                     step_menu=["SEE_FORM"]),
+@dp.callback_query_handler(btn_names_msg.filter(name_btn=['Форма'],
+                                                step_menu=["SEE_FORM"]),
                            state=[StatesUsers.get_forms])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
                                                      step_menu=["SEL_FORM"]),
                            state=[StatesUsers.get_form_with_name])
-async def get_forms_user(call: CallbackQuery, state: FSMContext):
+async def get_forms_user(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await call.answer(cache_time=3)
     await StatesUsers.edit_form.set()
     async with state.proxy() as data:
         date = datetime.datetime.today().date()
         company = data['user_name']
+        name_work = CommandsDB.get_name_work_for_id(callback_data.get('name'))
+        await call.message.edit_text(f'Ссылка на изменение формы:\n ', reply_markup=KBLines.btn_del_or_back('EDIT_FORM'))
 
 
 ##########################
