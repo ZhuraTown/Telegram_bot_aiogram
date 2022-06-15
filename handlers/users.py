@@ -43,11 +43,14 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     await StatesUsers.get_forms.set()
     async with state.proxy() as data:
+        works_with_ids = {}
         date = datetime.datetime.today().date()
         names_forms = CommandsDB.get_name_forms_with_user_with_date(data['user_name'], date)
-        works_with_ids = {}
-        for name_form in names_forms:
-            works_with_ids[name_form] = CommandsDB.get_all_names_work_with_user_id(data['id_user'])[0].work_id
+        names_work = CommandsDB.get_all_names_work_with_user_id(data['id_user'])
+        for name_work in names_work:
+            for name_form in names_forms:
+                if name_form == name_work[0]:
+                    works_with_ids[name_work[0]] = name_work[1]
         await call.message.edit_text(f"Созданные формы за {'<b>'}{date}{'</b>'}",
                                      parse_mode=ParseMode.HTML,
                                      reply_markup=KBLines.get_names_work_forms('SEE_FORM', works_with_ids))
@@ -63,10 +66,11 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext, callback_data: 
     await call.answer(cache_time=3)
     await StatesUsers.edit_form.set()
     async with state.proxy() as data:
-        date = datetime.datetime.today().date()
         company = data['user_name']
         name_work = CommandsDB.get_name_work_for_id(callback_data.get('name'))
-        await call.message.edit_text(f'Ссылка на изменение формы:\n ', reply_markup=KBLines.btn_del_or_back('EDIT_FORM'))
+        ids_form = CommandsDB.get_ids_str_form_with_work_user_today(user_name=company, name_work=name_work)
+        url = GeneratorUrlFlask.get_url_for_edit_form(company=company, work=name_work, ids=ids_form)
+        await call.message.edit_text(f'Ссылка на изменение формы:\n {url}', reply_markup=KBLines.btn_del_or_back('EDIT_FORM'))
 
 
 ##########################

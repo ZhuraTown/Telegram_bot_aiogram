@@ -20,6 +20,10 @@
             </div>
           <div class="container form-box" id="form_container">
             <div class="form-group">
+                {% for id in  forms %}
+                    <h1>id-form {{ id }}</h1>
+                {% endfor %}
+                <input type="text" value="1" hidden name="id-str-form" id="id-str-form">
                 <div class="build_stage_level">
                 <div class="input_build">
                     <select name="select" id="build" required >

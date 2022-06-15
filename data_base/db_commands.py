@@ -263,3 +263,26 @@ class CommandsDB:
             return False
         finally:
             session.commit()
+
+    @staticmethod
+    def get_ids_str_form_with_work_user_today(user_name: str, name_work: str) -> list:
+        date_today = datetime.today().date()
+        rows = session.query(TableWork.work_sting_id).\
+            filter(TableWork.user_name == user_name,
+                   TableWork.name_work == name_work,
+                   TableWork.date_created == date_today).all()
+        return [id_form.work_sting_id for id_form in rows]
+
+    @staticmethod
+    def check_that_str_form_with_id_in_db(id_str: int or str) -> bool:
+        return True if session.query(TableWork.work_sting_id).filter(TableWork.work_sting_id == id_str).all() else False
+
+    @staticmethod
+    def get_str_form_with_id(id_str: int or str) -> list:
+        TB = TableWork
+        rows = session.query(TB.work_sting_id, TB.name_stage, TB.name_build, TB.name_level,
+                             TB.number_security_p, TB.number_security_f, TB.number_duty_p, TB.number_duty_f,
+                             TB.number_worker_p, TB.number_worker_f, TB.number_ITR_p, TB.number_ITR_f,
+                             ).filter(TB.work_sting_id == id_str).all()
+        return rows
+
