@@ -17,25 +17,26 @@
                 <h5><input type="text" id="company" value="{{ company }}" readonly name="company"></h5>
                 <h5><input type="text" id="date" value="{{ date }}" readonly name="date"></h5>
                 <h5><textarea id="name_work" readonly name="name_work" readonly>{{ name_work }}</textarea></h5>
+                <input type="text" id="ids" name="ids" value="{{ ids }}" readonly hidden>
             </div>
-          <div class="container form-box" id="form_container">
-            <div class="form-group">
-                {% for id in  forms %}
-                    <h1>id-form {{ id }}</h1>
-                {% endfor %}
-                <input type="text" value="1" hidden name="id-str-form" id="id-str-form">
+          {% for form, value in  forms.items() %}
+          <div class="container form-box" id="{{ form }}">
+              <div class="form-group">
+                <input type="text" value="{{ form }}" hidden name="id-str-form" id="id-str-form">
                 <div class="build_stage_level">
                 <div class="input_build">
-                    <select name="select" id="build" required >
-                        <option selected value="">Здание</option>
+                    <select name="select" id="build-form" required >
+                        <option value="{{ value.name_build }}">{{ value.name_build }}</option>
                     </select>
                 </div>
                     <div class="input_inline">
                         <div class="left-block" >
-                            <input type="text" class="form-control only-block" placeholder="Этаж" name="level" id="level" required >
+                            <input type="text" class="form-control only-block" placeholder="Этаж"
+                                   name="level" id="level" value="{{ value.name_level }}" required  >
                         </div>
                         <div class="right-block">
-                            <input type="number" class="form-control only-block" placeholder="Этап" name="stage" id="stage" required >
+                            <input type="number" class="form-control only-block" placeholder="Этап"
+                                   name="stage" id="stage" value="{{ value.name_stage }}" required >
                         </div>
                     </div>
                     </div>
@@ -43,10 +44,12 @@
                     <h4>Рабочие</h4>
                     <div class="input_inline">
                         <div class="left-block" >
-                            <input type="number" class="form-control only-block" placeholder="Плановый" name="worker_p" id="worker_p" value="0">
+                            <input type="number" class="form-control only-block" placeholder="Плановый"
+                                   name="worker_p" id="worker_p" value="{{ value.number_worker_p }}">
                         </div>
                         <div class="right-block">
-                            <input type="number" class="form-control only-block" placeholder="Фактический" name="worker_f" id="worker_f" value="0">
+                            <input type="number" class="form-control only-block" placeholder="Фактический"
+                                   name="worker_f" id="worker_f" value="{{ value.number_worker_f }}">
                         </div>
                     </div>
                 </div>
@@ -54,10 +57,12 @@
                     <h4>ИТР</h4>
                     <div class="input_inline">
                         <div class="left-block" >
-                            <input type="number" class="form-control only-block" placeholder="Плановый" name="itr_p" id="itr_p" value="0">
+                            <input type="number" class="form-control only-block" placeholder="Плановый"
+                                   name="itr_p" id="itr_p" value="{{ value.number_ITR_p }}">
                         </div>
                         <div class="right-block">
-                            <input type="number" class="form-control only-block" placeholder="Фактический" name="itr_f" id="itr_f" value="0">
+                            <input type="number" class="form-control only-block" placeholder="Фактический"
+                                   name="itr_f" id="itr_f" value="{{ value.number_ITR_f }}">
                         </div>
                     </div>
                 </div>
@@ -65,10 +70,12 @@
                     <h4>Охрана</h4>
                     <div class="input_inline">
                         <div class="left-block" >
-                            <input type="number" class="form-control only-block" placeholder="Плановый" name="sec_p" id="sec_p" value="0">
+                            <input type="number" class="form-control only-block" placeholder="Плановый"
+                                   name="sec_p" id="sec_p" value="{{ value.number_security_p }}">
                         </div>
                         <div class="right-block">
-                            <input type="number" class="form-control only-block" placeholder="Фактический" name="sec_f" id="sec_f" value="0">
+                            <input type="number" class="form-control only-block" placeholder="Фактический"
+                                   name="sec_f" id="sec_f" value="{{ value.number_security_f }}">
                         </div>
                     </div>
                 </div>
@@ -76,15 +83,22 @@
                     <h4>Дежурный</h4>
                     <div class="input_inline">
                         <div class="left-block" >
-                            <input type="number" class="form-control only-block" placeholder="Плановый" name="duty_p" id="duty_p" value="0">
+                            <input type="number" class="form-control only-block" placeholder="Плановый"
+                                   name="duty_p" id="duty_p" value="{{ value.number_duty_p }}">
                         </div>
                         <div class="right-block">
-                            <input type="number" class="form-control only-block" placeholder="Фактический" name="duty_f" id="duty_f" value="0">
+                            <input type="number" class="form-control only-block" placeholder="Фактический"
+                                   name="duty_f" id="duty_f" value="{{ value.number_duty_f }}">
                         </div>
                     </div>
+
                 </div>
             </div>
+          <div class="button-delete">
+          <input type="button" value="Удалить" class="btn delete" id="clear" onclick="del_form({{ form }});">
           </div>
+          </div>
+          {% endfor %}
         </form>
         <div class="btn-add">
             <input type="button" value="Добавить" class="btn" id="btn-add" onclick="add_str();">

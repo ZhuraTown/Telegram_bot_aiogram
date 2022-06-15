@@ -87,7 +87,6 @@ async function getResponse(){
         let newOption = new Option(value, key)
         build.append(newOption)
     }
-    // let response = await fetch("http://127.0.0.1:5000/builds",{
     let response = await fetch(URL_WORK_BUILDS,{
         method: "GET"
     } ).then(response => response.json())
@@ -102,7 +101,6 @@ async function getResponseName(id_select){
         let select = document.getElementById(id_select)
         select.append(newOption)
     }
-    // let response = await fetch("http://127.0.0.1:5000/builds",{
     let response = await fetch(URL_WORK_BUILDS,{
         method: "GET"
     } ).then(response => response.json())
@@ -111,13 +109,27 @@ async function getResponseName(id_select){
     }
     }
 
-    // const btn = document.querySelector('.btn-add')
-    // btn.addEventListener('click', () => {
-    //     console.log('hey')
-    //     add_str();
-    // })
+
+async function getBuilds(){
+        function addOption(key, value, element) {
+        let newOption = new Option(value, key)
+        element.append(newOption)
+        }
+    //    Запрашиваю имена зданий
+    let response = await fetch(URL_WORK_BUILDS,{
+        method: "GET"
+    } ).then(response => response.json())
+    //  Собираю список всех доступных полей select, куда добавить здания
+    let builds = document.querySelectorAll("#build-form")
+    builds.forEach(function(item, i, arr) {
+        for(let key in response){
+            if (item.children[0].value !== response[key]) {
+                addOption(response[key], response[key], item)
+            }}})
+}
 
 getResponse()
+getBuilds()
 
 
 

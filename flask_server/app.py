@@ -6,13 +6,6 @@ from data_base.db_commands import CommandsDB
 app = Flask(__name__)
 
 
-@app.route('/1', methods=["GET", "POST"])
-def example():
-    url_args = request.args
-    return render_template('example.html',
-                           title=url_args.get('title'), name=url_args.get('name'), word=url_args.get('word'))
-
-
 @app.route('/builds', methods=['GET'])
 def get_builds():
     builds = {}
@@ -42,7 +35,8 @@ def create_form():
                                            number_security=[int(form_sheet['sec_p']), int(form_sheet['sec_f'])],
                                            number_duty=[int(form_sheet['duty_p']), int(form_sheet['duty_f'])],
                                            number_itr=[int(form_sheet['itr_p']), int(form_sheet['itr_f'])])
-        return render_template('finish_create_form.html', company=company, date=date, name_work=name_work)
+        msg = "Форма успешно отправлена на сервер! Можете закрыть страницу"
+        return render_template('finish_create_form.html', company=company, date=date, name_work=name_work, msg=msg)
 
     elif request.method == "GET":
         name_work = request.args.get('work')
@@ -56,9 +50,6 @@ def create_form():
 def main_page():
     if request.method == 'POST':
         data = request.form.to_dict(flat=False)
-        print(data)
-        print(len(data))
-        print(type(data))
         return data
     elif request.method == "GET":
         return render_template('finish_create_form.html', )
@@ -69,14 +60,16 @@ def page_user():
     name_work = request.args.get('work')
     company = request.args.get('company')
     date = datetime.today().strftime('%d.%m.%y')
-
-    if request.method == "GET":
+    if request.method == "POST":
+        msg = 'Форма успешна обновлена! Можете закрыть страницу!'
+        return render_template('finish_create_form.html', company=company, date=date, name_work=name_work, msg=msg)
+    elif request.method == "GET":
         ids = request.args.get('ids').split(',')
         forms = {}
         for id_form in ids:
             if CommandsDB.check_that_str_form_with_id_in_db(id_form):
-                forms[id_form] = CommandsDB.get_str_form_with_id(id_form)
-        return render_template('see_form.html', forms=forms, name_work=name_work, company=company, date=date)
+                forms[id_form] = CommandsDB.get_str_form_with_id(id_form)[0]
+        return render_template('see_form.html', forms=forms, name_work=name_work, company=company, date=date, ids=ids)
 
 
 if __name__ == '__main__':
