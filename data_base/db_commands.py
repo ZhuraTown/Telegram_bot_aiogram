@@ -160,6 +160,7 @@ class CommandsDB:
     def get_name_work_id_for_work_name(work_name):
         row = session.query(TableNameWork.work_id).filter(TableNameWork.work_name == work_name).one()
         return row[0]
+
     ##################################
     #             ЗДАНИЯ
     #################################
@@ -235,6 +236,31 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
+    def edit_form_string_with_id(id_string: str or int, name_stage: str, name_build: str,
+                                 level: str,
+                                 number_security: list,
+                                 number_duty: list,
+                                 number_worker: list,
+                                 number_itr: list, ):
+        tb = TableWork
+        try:
+            session.query(tb).filter(tb.work_sting_id == id_string). \
+                update({"name_stage": name_stage, 'name_build': name_build, 'name_level': level,
+                        'number_security_p': number_security[0], 'number_security_f': number_security[1],
+                        'number_duty_p': number_duty[0], 'number_duty_f': number_duty[1],
+                        'number_worker_p': number_worker[0], 'number_worker_f': number_worker[1],
+                        'number_ITR_p': number_itr[0], 'number_ITR_f': number_itr[1]})
+            session.flush()
+            print('Форма успешно измененна')
+            return True
+        except:
+            session.rollback()
+            print('Что-то пошло не так. Изменить пользователя не удалось')
+            return False
+        finally:
+            session.commit()
+
+    @staticmethod
     def get_forms_with_user_with_name(user_name: str, name_work: str) -> List[
         Dict[str, Union[Dict[str, List[Any]], Any]]]:
         TB = TableWork
@@ -251,15 +277,19 @@ class CommandsDB:
                 session.query(TB.name_work).filter(TB.user_name == user_name, TB.date_created == date).distinct().all()]
 
     @staticmethod
-    def del_str_forms_with_name_work_user(user: str, name_work: str):
+    def del_str_form_with_name_work_or_id_form(id_form:str or int = None, name_work: str = None):
         try:
-            session.query(TableWork).filter(TableWork.name_work == name_work, TableWork.user_name == user).delete()
+            if id_form:
+                session.query(TableWork).filter(TableWork.work_sting_id == id_form).delete()
+                print(f"Удаление id:{id_form}  успешно")
+            elif name_work:
+                session.query(TableWork).filter(TableWork.name_work == name_work).delete()
+                print(f"Удаление name:{name_work} успешно")
             session.flush()
-            print(f"Удаление {name_work} {user} успешно")
             return True
         except:
             session.rollback()
-            print(f'Ошибка удаления {name_work} {user} из БД')
+            print(f'Ошибка удаления {id_form} из БД')
             return False
         finally:
             session.commit()
@@ -267,7 +297,7 @@ class CommandsDB:
     @staticmethod
     def get_ids_str_form_with_work_user_today(user_name: str, name_work: str) -> list:
         date_today = datetime.today().date()
-        rows = session.query(TableWork.work_sting_id).\
+        rows = session.query(TableWork.work_sting_id). \
             filter(TableWork.user_name == user_name,
                    TableWork.name_work == name_work,
                    TableWork.date_created == date_today).all()
@@ -285,4 +315,3 @@ class CommandsDB:
                              TB.number_worker_p, TB.number_worker_f, TB.number_ITR_p, TB.number_ITR_f,
                              ).filter(TB.work_sting_id == id_str).all()
         return rows
-

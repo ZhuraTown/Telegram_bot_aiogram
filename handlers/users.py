@@ -159,7 +159,7 @@ async def del_name_work(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         id_work = data.get('id_work')
         name_work = data.get('name_work')
-        if CommandsDB.del_name_work(id_work):
+        if CommandsDB.del_name_work(id_work) and CommandsDB.del_str_form_with_name_work_or_id_form(name_work=name_work):
             await bot.answer_callback_query(call.id, text=f'{name_work}\n'
                                                           f'Успешно удалено! ', show_alert=True)
         else:
