@@ -17,13 +17,16 @@
                 <h5><input type="text" id="company" value="{{ company }}" readonly name="company"></h5>
                 <h5><input type="text" id="date" value="{{ date }}" readonly name="date"></h5>
                 <h5><textarea id="name_work" readonly name="name_work" readonly>{{ name_work }}</textarea></h5>
+                <select name="contractor" id="contractor" required >
+                        <option  value="" disabled selected>Ген.Подрядчик</option>
+                </select>
             </div>
           <div class="container form-box" id="form_container">
             <div class="form-group">
                 <div class="build_stage_level">
                 <div class="input_build">
                     <select name="select" id="build" required >
-                        <option selected value="">Здание</option>
+                        <option selected disabled value="">Здание</option>
                     </select>
                 </div>
                     <div class="input_inline">

@@ -18,6 +18,9 @@
                 <h5><input type="text" id="date" value="{{ date }}" readonly name="date"></h5>
                 <h5><textarea id="name_work" readonly name="name_work" readonly>{{ name_work }}</textarea></h5>
                 <input type="text" id="ids" name="ids" value="{{ ids }}" readonly hidden>
+                <select name="contractor" id="contractor" required >
+                        <option  value="{{ contractor }}" selected>{{ contractor }}</option>
+                </select>
             </div>
           {% for form, value in  forms.items() %}
           <div class="container form-box" id="{{ form }}">

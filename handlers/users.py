@@ -43,17 +43,24 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     await StatesUsers.get_forms.set()
     async with state.proxy() as data:
-        works_with_ids = {}
         date = datetime.datetime.today().date()
         names_forms = CommandsDB.get_name_forms_with_user_with_date(data['user_name'], date)
         names_work = CommandsDB.get_all_names_work_with_user_id(data['id_user'])
+        print(names_work)
+        print(names_forms)
+        print()
+        works = []
+        data_works = []
         for name_work in names_work:
             for name_form in names_forms:
-                if name_form == name_work[0]:
-                    works_with_ids[name_work[0]] = name_work[1]
+                if name_form[0] == name_work[0]:
+                    contractor_id = CommandsDB.get_user_id_with_name(name_form[1]).user_id
+                    # works.append(name_work[0])
+                    data_works.append([name_work[0], name_work[1], name_form[1], contractor_id])
+                    # works_with_ids[name_work[0]] = [name_work[1], name_form[1], contractor_id]
         await call.message.edit_text(f"Созданные формы за {'<b>'}{date}{'</b>'}",
                                      parse_mode=ParseMode.HTML,
-                                     reply_markup=KBLines.get_names_work_forms('SEE_FORM', works_with_ids))
+                                     reply_markup=KBLines.get_names_work_forms('SEE_FORM', data_works))
 
 
 @dp.callback_query_handler(btn_names_msg.filter(name_btn=['Форма'],
@@ -67,10 +74,15 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext, callback_data: 
     await StatesUsers.edit_form.set()
     async with state.proxy() as data:
         company = data['user_name']
-        name_work = CommandsDB.get_name_work_for_id(callback_data.get('name'))
-        ids_form = CommandsDB.get_ids_str_form_with_work_user_today(user_name=company, name_work=name_work)
-        url = GeneratorUrlFlask.get_url_for_edit_form(company=company, work=name_work, ids=ids_form)
-        await call.message.edit_text(f'Ссылка на изменение формы:\n {url}', reply_markup=KBLines.btn_del_or_back('EDIT_FORM'))
+        value_from_callback_data = callback_data.get('name').split(',')
+        name_work = CommandsDB.get_name_work_for_id(value_from_callback_data[0]).work_name
+        contractor = CommandsDB.get_user_with_id(value_from_callback_data[1]).name
+        ids_form = CommandsDB.get_ids_str_form_with_work_user_today(user_name=company,
+                                                                    name_work=name_work, contractor=contractor)
+        url = GeneratorUrlFlask.get_url_for_edit_form(company=company, work=name_work,
+                                                      ids=ids_form, contractor=contractor)
+        await call.message.edit_text(f'Ссылка на изменение формы:\n {url}',
+                                     reply_markup=KBLines.btn_back('EDIT_FORM'))
 
 
 ##########################
@@ -141,7 +153,7 @@ async def add_name_work_in_db(call: CallbackQuery, state: FSMContext):
                            state=[StatesUsers.create_new_form])
 async def create_form_or_del_name_work(call: CallbackQuery, state: FSMContext, callback_data: dict):
     async with state.proxy() as data:
-        name_work = CommandsDB.get_name_work_for_id(callback_data.get("name"))
+        name_work = CommandsDB.get_name_work_for_id(callback_data.get("name")).work_name
         data['name_work'] = name_work
         data['id_work'] = callback_data.get('name')
         await call.message.edit_text(

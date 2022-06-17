@@ -56,12 +56,14 @@ class KBLines:
         return InlineKeyboardMarkup(row_width=2).row(btn_save).row(btn_back)
 
     @staticmethod
-    def get_names_work_forms(step_menu: str, names_form: dict):
+    def get_names_work_forms(step_menu: str, data_works: list):
         kb_inline = InlineKeyboardMarkup(row_width=2)
-        for key, value in names_form.items():
-            btn_name_work = InlineKeyboardButton(text=f'{key}', callback_data=btn_names_msg.new(
-                step_menu=step_menu, name=f'{value}', name_btn='Форма'))
-            kb_inline.row(btn_name_work)
+        for data in data_works:
+            btn_name_work = InlineKeyboardButton(text=f'{data[0]}', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{data[1]},{data[3]}', name_btn='Форма'))
+            btn_contractor = InlineKeyboardButton(text=f'{data[2]}', callback_data=btn_names_msg.new(
+                step_menu=step_menu, name=f'{data[1]},{data[3]}', name_btn='Форма'))
+            kb_inline.row(btn_name_work, btn_contractor)
         btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
             step_menu=f'{step_menu}', name_btn='Назад'
         ))

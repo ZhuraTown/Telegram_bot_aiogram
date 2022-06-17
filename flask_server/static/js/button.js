@@ -1,6 +1,6 @@
-// import { URL_WORK_BUILDS } from '../../../constants'
+// import { URL_WORK } from '../../../constants'
 
-const URL_WORK_BUILDS = "http://127.0.0.1:5000/builds"
+const URL_WORK = "http://127.0.0.1:5000"
 
 
 function add_str() {
@@ -87,7 +87,7 @@ async function getResponse(){
         let newOption = new Option(value, key)
         build.append(newOption)
     }
-    let response = await fetch(URL_WORK_BUILDS,{
+    let response = await fetch(URL_WORK + "/builds",{
         method: "GET"
     } ).then(response => response.json())
     for(let key in response){
@@ -101,12 +101,29 @@ async function getResponseName(id_select){
         let select = document.getElementById(id_select)
         select.append(newOption)
     }
-    let response = await fetch(URL_WORK_BUILDS,{
+    let response = await fetch(URL_WORK + "/builds",{
         method: "GET"
     } ).then(response => response.json())
     for(let key in response){
         addOption(response[key], response[key])
     }
+    }
+
+async function getContractors() {
+        function addOption(key, value) {
+        let newOption = new Option(value, key)
+        let select = document.getElementById("contractor")
+        select.append(newOption)
+    }
+        let response = await fetch(URL_WORK + "/contactors",{
+        method: "GET"
+    } ).then(response => response.json())
+    let contractors = document.querySelectorAll("#contractor")
+        contractors.forEach(function(item, i, arr) {
+            for(let key in response){
+                if (item.children[0].value !== response[key]) {
+                    addOption(response[key], response[key], item)
+                }}})
     }
 
 
@@ -116,7 +133,7 @@ async function getBuilds(){
         element.append(newOption)
         }
     //    Запрашиваю имена зданий
-    let response = await fetch(URL_WORK_BUILDS,{
+    let response = await fetch(URL_WORK + "/builds",{
         method: "GET"
     } ).then(response => response.json())
     //  Собираю список всех доступных полей select, куда добавить здания
@@ -128,6 +145,8 @@ async function getBuilds(){
             }}})
 }
 
+
+getContractors()
 getResponse()
 getBuilds()
 

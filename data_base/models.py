@@ -38,6 +38,7 @@ class TableWork(base):
     name_stage = Column(String, comment='Наименование этапа')
     name_build = Column(String, comment='Наименование здания')
     name_level = Column(String, comment='Наименование этажа')
+    contractor = Column(String, default=None, comment='Ген подрядчик')
     number_security_p = Column(Integer, default=0, comment='Охрана План')
     number_security_f = Column(Integer, default=0, comment='Охрана Факт')
     number_duty_p = Column(Integer, default=0, comment='Дежурный План')

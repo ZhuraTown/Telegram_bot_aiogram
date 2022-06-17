@@ -6,10 +6,7 @@
     align-items: flex-start;
     isolation: isolate;
     border-radius: 16px;
-    padding-top: 24px;
-    padding-left: 24px;
-    padding-bottom: 28px;
-
+    padding: 24px 18px 28px;
     max-width: 500px;
 }
 
@@ -111,6 +108,20 @@ textarea {
     font-size: 18px;
     line-height: 20px;
     max-width: 500px;
+    width: 100%;
+}
+
+#contractor {
+    background: #FFFFFF;
+    color: #797979;
+    padding: 16px;
+    border-radius: 12px;
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 20px;
+    max-width: 450px;
     width: 100%;
 }
 

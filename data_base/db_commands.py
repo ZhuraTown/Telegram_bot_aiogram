@@ -18,8 +18,12 @@ class CommandsDB:
     ##############################
     @staticmethod
     def get_user_with_id(id_user: str or int):
-        my_query = session.query(User.name, User.user_id).filter(User.user_id == id_user).all()
+        my_query = session.query(User.name, User.user_id).filter(User.user_id == id_user).one()
         return my_query
+
+    @staticmethod
+    def get_user_id_with_name(name_user: str):
+        return session.query(User.user_id).filter(User.name == name_user).one()
 
     @staticmethod
     def get_all_users(user_password=False) -> list or dict:
@@ -31,8 +35,11 @@ class CommandsDB:
         return rows
 
     @staticmethod
-    def get_names_all_users() -> list:
-        return [name[0] for name in session.query(User.name).all()]
+    def get_names_all_users(without_admin=False) -> list:
+        if without_admin:
+            return [name[0] for name in session.query(User.name).filter(User.admin == False).all()]
+        else:
+            return [name[0] for name in session.query(User.name).all()]
 
     @staticmethod
     def add_user_system(name: str, password: str or int, comment: str = None, admin: bool = False):
@@ -154,7 +161,7 @@ class CommandsDB:
     @staticmethod
     def get_name_work_for_id(id_name):
         row = session.query(TableNameWork.work_name).filter(TableNameWork.work_id == id_name).one()
-        return row[0]
+        return row
 
     @staticmethod
     def get_name_work_id_for_work_name(work_name):
@@ -195,7 +202,8 @@ class CommandsDB:
 
     @staticmethod
     def get_all_names_builds():
-        rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build).all()
+        rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build).order_by(
+            TableNameBuild.name_build).all()
         return rows
 
     @staticmethod
@@ -212,26 +220,29 @@ class CommandsDB:
                             number_security: list,
                             number_duty: list,
                             number_worker: list,
-                            number_itr: list, ):
+                            number_itr: list,
+                            contractor: str):
         try:
             date = datetime.today().date()
             tb = TableWork
             if session.query(tb.work_sting_id). \
                     filter(tb.user_name == user_name, tb.name_work == name_work,
                            tb.name_stage == name_stage, tb.name_build == name_build,
-                           tb.name_level == level, tb.date_created == date).count() == 0:
+                           tb.name_level == level, tb.date_created == date, tb.contractor == contractor).count() == 0:
                 session.add(TableWork(user_name=user_name, name_work=name_work, name_stage=name_stage,
                                       name_build=name_build, name_level=level,
                                       number_security_p=number_security[0], number_security_f=number_security[1],
                                       number_duty_p=number_duty[0], number_duty_f=number_duty[1],
                                       number_worker_p=number_worker[0], number_worker_f=number_worker[1],
-                                      number_ITR_p=number_itr[0], number_ITR_f=number_itr[1], date_created=date
+                                      number_ITR_p=number_itr[0], number_ITR_f=number_itr[1], date_created=date,
+                                      contractor=contractor
                                       ))
                 session.flush()
                 return True
         except:
             session.rollback()
             print(f'Ошибка записи в БД')
+            return False
         finally:
             session.commit()
 
@@ -241,7 +252,8 @@ class CommandsDB:
                                  number_security: list,
                                  number_duty: list,
                                  number_worker: list,
-                                 number_itr: list, ):
+                                 number_itr: list,
+                                 contractor: str):
         tb = TableWork
         try:
             session.query(tb).filter(tb.work_sting_id == id_string). \
@@ -249,7 +261,9 @@ class CommandsDB:
                         'number_security_p': number_security[0], 'number_security_f': number_security[1],
                         'number_duty_p': number_duty[0], 'number_duty_f': number_duty[1],
                         'number_worker_p': number_worker[0], 'number_worker_f': number_worker[1],
-                        'number_ITR_p': number_itr[0], 'number_ITR_f': number_itr[1]})
+                        'number_ITR_p': number_itr[0], 'number_ITR_f': number_itr[1],
+                        'contractor': contractor
+                        })
             session.flush()
             print('Форма успешно измененна')
             return True
@@ -273,11 +287,12 @@ class CommandsDB:
     @staticmethod
     def get_name_forms_with_user_with_date(user_name, date):
         TB = TableWork
-        return [name.name_work for name in
-                session.query(TB.name_work).filter(TB.user_name == user_name, TB.date_created == date).distinct().all()]
+        return [(name.name_work, name.contractor) for name in
+                session.query(TB.name_work, TB.contractor).
+                filter(TB.user_name == user_name, TB.date_created == date).distinct().all()]
 
     @staticmethod
-    def del_str_form_with_name_work_or_id_form(id_form:str or int = None, name_work: str = None):
+    def del_str_form_with_name_work_or_id_form(id_form: str or int = None, name_work: str = None):
         try:
             if id_form:
                 session.query(TableWork).filter(TableWork.work_sting_id == id_form).delete()
@@ -295,12 +310,13 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def get_ids_str_form_with_work_user_today(user_name: str, name_work: str) -> list:
+    def get_ids_str_form_with_work_user_today(user_name: str, name_work: str, contractor: str) -> list:
         date_today = datetime.today().date()
         rows = session.query(TableWork.work_sting_id). \
             filter(TableWork.user_name == user_name,
                    TableWork.name_work == name_work,
-                   TableWork.date_created == date_today).all()
+                   TableWork.date_created == date_today,
+                   TableWork.contractor == contractor).all()
         return [id_form.work_sting_id for id_form in rows]
 
     @staticmethod
@@ -310,7 +326,7 @@ class CommandsDB:
     @staticmethod
     def get_str_form_with_id(id_str: int or str) -> list:
         TB = TableWork
-        rows = session.query(TB.work_sting_id, TB.name_stage, TB.name_build, TB.name_level,
+        rows = session.query(TB.work_sting_id, TB.contractor, TB.name_stage, TB.name_build, TB.name_level,
                              TB.number_security_p, TB.number_security_f, TB.number_duty_p, TB.number_duty_f,
                              TB.number_worker_p, TB.number_worker_f, TB.number_ITR_p, TB.number_ITR_f,
                              ).filter(TB.work_sting_id == id_str).all()
