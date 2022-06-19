@@ -7,7 +7,8 @@ import os
 base = declarative_base()
 path_to_db = os.path.dirname(os.path.realpath(__file__))
 
-engine = create_engine('sqlite:///' + os.path.join(path_to_db, 'tg_bot'), echo=True)
+engine = create_engine('sqlite:///' + os.path.join(path_to_db, 'tg_bot'), echo=True,
+                       connect_args={'check_same_thread': False})
 
 session = sessionmaker(bind=engine)
 session = scoped_session(session)

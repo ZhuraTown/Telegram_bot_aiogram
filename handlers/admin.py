@@ -1,8 +1,9 @@
+import datetime
 import random
 
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InputFile
 
 from create_bot import dp, bot
 from data_base.db_commands import CommandsDB
@@ -10,6 +11,7 @@ from keyboards.inlines_kb.callback_datas import menu_callback_user, btn_names_ms
 from keyboards.inlines_kb.kb_inlines import KBLines
 from memory_FSM.bot_memory import StatesAdminUser, AuthorizationUser
 
+from excel_creator.excel_writer import ExcelWriter
 
 ###############################
 #        СТАРТ АДМИНКИ
@@ -18,9 +20,9 @@ from memory_FSM.bot_memory import StatesAdminUser, AuthorizationUser
                                                      step_menu=['AUTH_ADMIN']),
                            state=[AuthorizationUser.correct_password_admin])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-                                                     step_menu=['A_P_USERS', "BUILDS"]),
+                                                     step_menu=['A_P_USERS', "BUILDS", "TABLE_TIME"]),
                            state=[StatesAdminUser.get_info_users,
-                                  StatesAdminUser.user_name_correct, StatesAdminUser.builds])
+                                  StatesAdminUser.user_name_correct, StatesAdminUser.builds, StatesAdminUser.get_table])
 async def cmd_admin_panel(call: CallbackQuery, state: FSMContext):
     await bot.answer_callback_query(call.id, cache_time=5)
     await state.reset_state()
@@ -28,6 +30,23 @@ async def cmd_admin_panel(call: CallbackQuery, state: FSMContext):
                                  reply_markup=KBLines.get_admin_panel_start("ADMIN_PANEL"))
     await StatesAdminUser.start_admin_panel.set()
 
+
+#############################
+#    ВЫГРУЗИТЬ ТАБЛИЦЫ
+#############################
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выгрузить'],
+                                                     step_menu=['ADMIN_PANEL']),
+                           state=[StatesAdminUser.start_admin_panel])
+async def get_table_time_sheet(call: CallbackQuery, state: FSMContext, callback_data: dict):
+    date_today = datetime.datetime.today().date()
+    await StatesAdminUser.get_table.set()
+    await call.message.edit_text(f'Таблица подрядчиков за:{"<b>"}{date_today}{"</b>"}',
+                                 parse_mode='HTML', reply_markup=None)
+    path_to_file = ExcelWriter('First_doc', 'ЕСТ').get_path_to_file()
+    file = open(path_to_file, 'rb')
+    await bot.send_document(call.message.chat.id, file)
+    await bot.send_message(call.message.chat.id, 'Нажмите кнопку Назад, чтобы вернутся в меню',
+                           reply_markup=KBLines.btn_back('TABLE_TIME'))
 
 ######################
 #       ЗДАНИЯ

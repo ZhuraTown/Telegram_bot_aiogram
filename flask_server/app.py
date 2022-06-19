@@ -64,7 +64,7 @@ def main_page():
         return render_template('finish_create_form.html', )
 
 
-@app.route('/see_form', methods=['GET', "POST"])
+@app.route('/edit_form', methods=['GET', "POST"])
 def page_user():
     name_work = request.args.get('work')
     company = request.args.get('company')
@@ -139,7 +139,7 @@ def page_user():
         for id_form in ids:
             if CommandsDB.check_that_str_form_with_id_in_db(id_form):
                 forms[id_form] = CommandsDB.get_str_form_with_id(id_form)[0]
-        return render_template('see_form.html', forms=forms, name_work=name_work,
+        return render_template('edit_form.html', forms=forms, name_work=name_work,
                                company=company, date=date, ids=ids, contractor=contractor)
 
 

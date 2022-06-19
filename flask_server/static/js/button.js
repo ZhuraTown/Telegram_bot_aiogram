@@ -5,8 +5,12 @@ const URL_WORK = "http://127.0.0.1:5000"
 
 function add_str() {
     const form = document.getElementById("form_timesheet");
-    const number_form = document.querySelectorAll('#form_container').length
-    const id_form = 'form_' + number_form
+    let number_form = document.querySelectorAll('#form_container').length
+    let id_form = 'form_' + number_form
+    while(document.getElementById(id_form) != null){
+        number_form ++
+        id_form = 'form_' + number_form
+    }
     let new_form = document.createElement('div')
     let id_select = 'select_' + number_form
     new_form.id =  id_form
@@ -15,7 +19,7 @@ function add_str() {
         '                <div class="build_stage_level">\n' +
         '                <div class="input_build">\n'
 
-    let form_part_2 = `<select name="select" class="build-select" id="${id_select}" required><option selected value="">Здание</option></select>`
+    let form_part_2 = `<select name="select" class="build-select" id="${id_select}" required><option value="" disabled selected>Здание</option></select>`
     const form_part_3 = '</div>\n' +
         '                    <div class="input_inline">\n' +
         '                        <div class="left-block" >\n' +
@@ -71,10 +75,10 @@ function add_str() {
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="button-delete">'
-    let form_part_4 = `<input type="button" value="Удалить" class="btn delete" id="clear" onclick="del_form('${id_form}');"></div></div></div>`
+    let form_part_4 = `<input type="button" value="Удалить" class="btn delete" id="btn-clear" onclick="del_form('${id_form}');"></div></div></div>`
     new_form.innerHTML = form_part_1 + form_part_2 + form_part_3+ form_part_4
     form.append(new_form)
-    getResponseName(id_select)
+    getBuildsWithIdForm(id_select)
 }
 
 function del_form(id_form) {
@@ -82,20 +86,22 @@ function del_form(id_form) {
     form_delete.remove()
 }
 
-async function getResponse(){
-        function addOption(key, value) {
+async function getBuildForStateForm(){
+        function addOption(key, value, element) {
         let newOption = new Option(value, key)
-        build.append(newOption)
+        element.append(newOption)
     }
+    let only_build = document.getElementById('build')
+    if (only_build != null){
     let response = await fetch(URL_WORK + "/builds",{
         method: "GET"
     } ).then(response => response.json())
     for(let key in response){
-        addOption(response[key], response[key])
-    }
+        addOption(response[key], response[key], only_build)
+    }}
 }
 
-async function getResponseName(id_select){
+async function getBuildsWithIdForm(id_select){
     function addOption(key, value) {
         let newOption = new Option(value, key)
         let select = document.getElementById(id_select)
@@ -146,8 +152,12 @@ async function getBuilds(){
 }
 
 
+let btn_add = document.getElementById('btn-add')
+
+btn_add.addEventListener('click', add_str)
+
 getContractors()
-getResponse()
+getBuildForStateForm()
 getBuilds()
 
 
