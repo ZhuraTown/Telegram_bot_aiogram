@@ -4,7 +4,6 @@ import os
 
 from itertools import cycle
 
-
 __path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 __excel_creator_dir = 'excel_creator'
 __time_sheet_xls_dir = 'time_sheet_xls'
@@ -51,7 +50,7 @@ class ExcelFormat:
         tb_time_sheet.set_font("Times New Roman")
         if set_bold:
             tb_time_sheet.set_bold()
-        tb_time_sheet.set_border(1)
+        tb_time_sheet.set_border(2)
         tb_time_sheet.set_align('vcenter')
         tb_time_sheet.set_align('center')
         tb_time_sheet.set_text_wrap()
@@ -106,10 +105,10 @@ class ExcelWriter:
     __time_sheet_xls_dir = 'time_sheet_xls'
     __path_to_dir = os.path.join(__path, __excel_creator_dir, __time_sheet_xls_dir)
 
-    def __init__(self, name_document: str, contractor: str):
+    def __init__(self, name_document: str, contractors: list):
         self.date = datetime.datetime.today().date()
         self.name = f"{name_document}_{self.date}.xlsx"
-        self.gen_contractor = contractor
+        self.gen_contractor = contractors
         self.workbook = xlsxwriter.Workbook(os.path.join(self.__path_to_dir, self.name))
         self.format = ExcelFormat(self.workbook)
         self.cur_row = 6
@@ -117,8 +116,23 @@ class ExcelWriter:
     def get_path_to_file(self):
         return os.path.join(self.__path_to_dir, self.name)
 
-    def _add_worksheet(self):
-        self.worksheet = self.workbook.add_worksheet(name=self.gen_contractor)
+    def _add_worksheet(self, contractor):
+        self.cur_row = 6
+        if '/' in contractor:
+            contractor = '_'.join(contractor.split('/'))
+        elif '\\' in contractor:
+            contractor = '_'.join(contractor.split("\\"))
+        elif ':' in contractor:
+            contractor = '_'.join(contractor.split(':'))
+        elif '*' in contractor:
+            contractor = '_'.join(contractor.split('*'))
+        elif '?' in contractor:
+            contractor = '_'.join(contractor.split('?'))
+        elif '[' in contractor:
+            contractor = '_'.join(contractor.split('['))
+        elif ']' in contractor:
+            contractor = '_'.join(contractor.split(']'))
+        self.worksheet = self.workbook.add_worksheet(name=contractor)
 
     def close(self):
         self.workbook.close()
@@ -181,27 +195,29 @@ class ExcelWriter:
         self.worksheet.set_column(3, 3, width=14)
         self.worksheet.merge_range(row, 3, row + 2, 3, 'Основной\nподрядчик', self.format.tb_tm_sh_title())
 
-    def write_title_companies_tb(self, companies: list):
+    def write_title_companies_tb(self, companies_and_work: list):
         """ Заполнение подрядчиками и наименованиеями работ оглавления таблицы"""
         row_name_comp = self.cur_row + 3
         row_name_work = row_name_comp + 1
         row_titles_workers = row_name_work + 1
         row_plan_fact_workers = row_titles_workers + 1
         col_comp = 4
-        for comp in companies:
+        for comp_and_work in companies_and_work:
             """Сужаю по ширине столбцы"""
             self.worksheet.set_column(col_comp, col_comp + 7, width=6)
             self.worksheet.merge_range(row_name_comp, col_comp, row_name_comp, col_comp + 7,
-                                       comp, self.format.tb_tm_sh_title())
+                                       comp_and_work[0], self.format.tb_tm_sh_title())
+            name_work = comp_and_work[1] if len(comp_and_work) > 1 else 'Нет наименования работ'
             self.worksheet.merge_range(row_name_work, col_comp, row_name_work, col_comp + 7,
-                                       'Наименование работ', self.format.tb_tm_sh_title())
+                                       name_work, self.format.tb_tm_sh_title())
             titles = ['Охрана', "Дежурный", "Рабочие", "ИТР ПТО"]
             for i, title in zip(range(0, 5), titles):
-                self.worksheet.merge_range(row_titles_workers, col_comp + i*2, row_titles_workers, col_comp + i*2 + 1,
+                self.worksheet.merge_range(row_titles_workers, col_comp + i * 2, row_titles_workers,
+                                           col_comp + i * 2 + 1,
                                            title, self.format.tb_tm_sh_title(set_bold=False))
-                self.worksheet.write(row_plan_fact_workers, col_comp + i*2,
+                self.worksheet.write(row_plan_fact_workers, col_comp + i * 2,
                                      'План', self.format.tb_tm_sh_title(set_bold=False))
-                self.worksheet.write(row_plan_fact_workers, col_comp + i*2 + 1,
+                self.worksheet.write(row_plan_fact_workers, col_comp + i * 2 + 1,
                                      'Факт', self.format.tb_tm_sh_title(set_bold=False))
             col_comp += 8
 
@@ -226,31 +242,38 @@ class ExcelWriter:
         self.worksheet.merge_range(row, 0, row, 3,
                                    'ИТОГО', self.format.tb_cell_write(grey=True, set_bold=True, set_bold_border=True))
         self.worksheet.merge_range(row + 1, 0, row + 1, 3,
-                                   'ДЕФИЦИТ', self.format.tb_cell_write(set_bold=True, red_font=True, set_bold_border=True))
+                                   'ДЕФИЦИТ',
+                                   self.format.tb_cell_write(set_bold=True, red_font=True, set_bold_border=True))
 
-
-    def create_xlsx(self):
-        self._add_worksheet()
+    def create_table_header(self, cont: str):
+        self._add_worksheet(cont)
         self._write_title_work(8)
         self._write_date_work()
         self._write_title_table_companies()
 
 
-aa = ExcelWriter('First_doc', 'ЕСТ')
-aa.create_xlsx()
-comps = ['ЛИИС/АМР', 'ЕСТ', "Термолайн", "АПА", "ПТК Спорт", "СГК", "Результат"]
-lines = [('2', 'Б1', 'L15', 'ЕСТ'),
-         ('2', 'Б1', 'L13', 'ЕСТ'),
-         ('2', 'Б1', 'L12', 'ЕСТ'),
-         ('2', 'Б1', 'L11', 'ЕСТ'),
-         ('5', 'Б1', 'L10', 'ЕСТ'),
-         ('5', 'Б2', 'L58', 'ЕСТ'),
-         ('13', 'Офис', 'L1', 'ЕСТ'),
-         ('13', 'Стилбат', 'L6', 'ЕСТ')]
-aa.write_companies_to_tb(comps)
-aa.write_title_tb_tm_sh()
-aa.write_title_companies_tb(comps)
-aa.write_builds_st_lv_tb(lines)
+from data_base.db_commands import CommandsDB
+
+contractors = CommandsDB.get_contractors_today_from_form()
+aa = ExcelWriter('First_doc', contractors)
+for contractor in contractors:
+    aa.create_table_header(contractor)
+    comps = CommandsDB.get_names_all_users(without_admin=True)
+    comps_and_work = CommandsDB.get_names_work_companies_from_form()
+    # Запрос Этап, Здание, Этаж, Ген подрядчик
+    # lns_from_form_with_contactor = CommandsDB.get()
+    lines = [('2', 'Б1', 'L15', 'ЕСТ'),
+             ('2', 'Б1', 'L13', 'ЕСТ'),
+             ('2', 'Б1', 'L12', 'ЕСТ'),
+             ('2', 'Б1', 'L11', 'ЕСТ'),
+             ('5', 'Б1', 'L10', 'ЕСТ'),
+             ('5', 'Б2', 'L58', 'ЕСТ'),
+             ('13', 'Офис', 'L1', 'ЕСТ'),
+             ('13', 'Стилбат', 'L6', 'ЕСТ')]
+    aa.write_companies_to_tb(comps)
+    aa.write_title_tb_tm_sh()
+    aa.write_title_companies_tb(comps_and_work)
+    aa.write_builds_st_lv_tb(lines)
 aa.close()
 
 # name_xls = 'lala.xlsx'

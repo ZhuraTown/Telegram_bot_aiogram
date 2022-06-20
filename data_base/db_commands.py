@@ -26,9 +26,14 @@ class CommandsDB:
         return session.query(User.user_id).filter(User.name == name_user).one()
 
     @staticmethod
-    def get_all_users(user_password=False) -> list or dict:
+    def get_all_users(user_password=False, without_admin=False) -> list or dict:
         if not user_password:
-            rows = session.query(User.user_id, User.name, User.comment, User.password, User.admin).all()
+            if without_admin:
+                rows = session.query(User.user_id, User.name, User.comment, User.password, User.admin).filter(
+                    User.admin == False).all()
+            else:
+                rows = session.query(User.user_id, User.name, User.comment, User.password, User.admin).all()
+            return rows
         else:
             rows = {user[1]: [user[0], user[2], user[3]] for user in
                     session.query(User.name, User.password, User.admin, User.user_id).all()}
@@ -289,7 +294,7 @@ class CommandsDB:
         TB = TableWork
         return [(name.name_work, name.contractor) for name in
                 session.query(TB.name_work, TB.contractor).
-                filter(TB.user_name == user_name, TB.date_created == date).distinct().all()]
+                    filter(TB.user_name == user_name, TB.date_created == date).distinct().all()]
 
     @staticmethod
     def del_str_form_with_name_work_or_id_form(id_form: str or int = None, name_work: str = None):
@@ -320,6 +325,19 @@ class CommandsDB:
         return [id_form.work_sting_id for id_form in rows]
 
     @staticmethod
+    def get_contractors_today_from_form() -> list:
+        date_today = datetime.today().date()
+        row = session.query(TableWork.contractor).filter(TableWork.date_created == date_today).distinct().all()
+        return [i[0] for i in row]
+
+    @staticmethod
+    def get_names_work_companies_from_form():
+        date_today = datetime.today().date()
+        row = session.query(TableWork.user_name, TableWork.name_work).filter(
+            TableWork.date_created == date_today).order_by(TableWork.user_name).distinct().all()
+        return row
+
+    @staticmethod
     def check_that_str_form_with_id_in_db(id_str: int or str) -> bool:
         return True if session.query(TableWork.work_sting_id).filter(TableWork.work_sting_id == id_str).all() else False
 
@@ -330,6 +348,19 @@ class CommandsDB:
                              TB.number_security_p, TB.number_security_f, TB.number_duty_p, TB.number_duty_f,
                              TB.number_worker_p, TB.number_worker_f, TB.number_ITR_p, TB.number_ITR_f,
                              ).filter(TB.work_sting_id == id_str).all()
+        return rows
+
+    @staticmethod
+    def get_all_str_from_form_with_cont(cont: str) -> list:
+        TB = TableWork
+        date_today = datetime.today().date()
+        rows = session.query(TB.name_stage, TB.name_build, TB.name_level, TB.contractor, TB.user_name, TB.name_work,
+                             TB.number_security_p, TB.number_security_f,
+                             TB.number_duty_p, TB.number_duty_f,
+                             TB.number_worker_p, TB.number_worker_f,
+                             TB.number_ITR_p, TB.number_ITR_f
+                             ).filter(TB.contractor == cont, TB.date_created == date_today).\
+            order_by(TB.name_stage, TB.name_build).all()
         return rows
 
     @staticmethod

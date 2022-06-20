@@ -35,7 +35,7 @@ class TableWork(base):
                            )
     user_name = Column(String, comment='Автор записи')
     name_work = Column(String, comment='Наименование работ')
-    name_stage = Column(String, comment='Наименование этапа')
+    name_stage = Column(Integer, comment='Наименование этапа')
     name_build = Column(String, comment='Наименование здания')
     name_level = Column(String, comment='Наименование этажа')
     contractor = Column(String, default=None, comment='Ген подрядчик')
