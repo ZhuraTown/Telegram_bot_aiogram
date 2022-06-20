@@ -27,6 +27,7 @@ class StatesAdminUser(StatesGroup):
     write_user_name = State()
     user_name_correct = State()
 
+
 class AuthorizationUser(StatesGroup):
     write_password = State()
     correct_password_user = State()

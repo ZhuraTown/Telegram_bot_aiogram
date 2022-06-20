@@ -85,7 +85,6 @@ class ExcelFormat:
         tb_cell.set_font_size(11)
         return tb_cell
 
-
     def tb_plan_format(self, set_bold: bool = True, set_border: bool = True):
         tb_plan = self.work_book.add_format()
         tb_plan.set_font("Times New Roman")
@@ -191,7 +190,7 @@ class ExcelWriter:
         col_comp = 4
         for comp in companies:
             """Сужаю по ширине столбцы"""
-            self.worksheet.set_column(col_comp, col_comp + 7, width=5)
+            self.worksheet.set_column(col_comp, col_comp + 7, width=6)
             self.worksheet.merge_range(row_name_comp, col_comp, row_name_comp, col_comp + 7,
                                        comp, self.format.tb_tm_sh_title())
             self.worksheet.merge_range(row_name_work, col_comp, row_name_work, col_comp + 7,
@@ -237,22 +236,22 @@ class ExcelWriter:
         self._write_title_table_companies()
 
 
-# aa = ExcelWriter('First_doc', 'ЕСТ')
-# aa.create_xlsx()
-# comps = ['ЛИИС/АМР', 'ЕСТ', "Термолайн", "АПА", "ПТК Спорт", "СГК", "Результат"]
-# lines = [('2', 'Б1', 'L15', 'ЕСТ'),
-#          ('2', 'Б1', 'L13', 'ЕСТ'),
-#          ('2', 'Б1', 'L12', 'ЕСТ'),
-#          ('2', 'Б1', 'L11', 'ЕСТ'),
-#          ('5', 'Б1', 'L10', 'ЕСТ'),
-#          ('5', 'Б2', 'L58', 'ЕСТ'),
-#          ('13', 'Офис', 'L1', 'ЕСТ'),
-#          ('13', 'Стилбат', 'L6', 'ЕСТ')]
-# aa.write_companies_to_tb(comps)
-# aa.write_title_tb_tm_sh()
-# aa.write_title_companies_tb(comps)
-# aa.write_builds_st_lv_tb(lines)
-# aa.close()
+aa = ExcelWriter('First_doc', 'ЕСТ')
+aa.create_xlsx()
+comps = ['ЛИИС/АМР', 'ЕСТ', "Термолайн", "АПА", "ПТК Спорт", "СГК", "Результат"]
+lines = [('2', 'Б1', 'L15', 'ЕСТ'),
+         ('2', 'Б1', 'L13', 'ЕСТ'),
+         ('2', 'Б1', 'L12', 'ЕСТ'),
+         ('2', 'Б1', 'L11', 'ЕСТ'),
+         ('5', 'Б1', 'L10', 'ЕСТ'),
+         ('5', 'Б2', 'L58', 'ЕСТ'),
+         ('13', 'Офис', 'L1', 'ЕСТ'),
+         ('13', 'Стилбат', 'L6', 'ЕСТ')]
+aa.write_companies_to_tb(comps)
+aa.write_title_tb_tm_sh()
+aa.write_title_companies_tb(comps)
+aa.write_builds_st_lv_tb(lines)
+aa.close()
 
 # name_xls = 'lala.xlsx'
 # workbook = xlsxwriter.Workbook(os.path.join(__path_to_dir, name_xls))

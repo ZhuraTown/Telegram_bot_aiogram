@@ -13,6 +13,7 @@ from memory_FSM.bot_memory import StatesAdminUser, AuthorizationUser
 
 from excel_creator.excel_writer import ExcelWriter
 
+
 ###############################
 #        СТАРТ АДМИНКИ
 ##############################
@@ -42,7 +43,23 @@ async def get_table_time_sheet(call: CallbackQuery, state: FSMContext, callback_
     await StatesAdminUser.get_table.set()
     await call.message.edit_text(f'Таблица подрядчиков за:{"<b>"}{date_today}{"</b>"}',
                                  parse_mode='HTML', reply_markup=None)
-    path_to_file = ExcelWriter('First_doc', 'ЕСТ').get_path_to_file()
+    xlsx_file = ExcelWriter('Отчет_по_табелю', 'ЕСТ')
+    path_to_file = xlsx_file.get_path_to_file()
+    xlsx_file.create_xlsx()
+    comps = CommandsDB.get_names_all_users(without_admin=True)
+    lines = [('2', 'Б1', 'L15', 'ЕСТ'),
+             ('2', 'Б1', 'L13', 'ЕСТ'),
+             ('2', 'Б1', 'L12', 'ЕСТ'),
+             ('2', 'Б1', 'L11', 'ЕСТ'),
+             ('5', 'Б1', 'L10', 'ЕСТ'),
+             ('5', 'Б2', 'L58', 'ЕСТ'),
+             ('13', 'Офис', 'L1', 'ЕСТ'),
+             ('13', 'Стилбат', 'L6', 'ЕСТ')]
+    xlsx_file.write_companies_to_tb(comps)
+    xlsx_file.write_title_tb_tm_sh()
+    xlsx_file.write_title_companies_tb(comps)
+    xlsx_file.write_builds_st_lv_tb(lines)
+    xlsx_file.close()
     file = open(path_to_file, 'rb')
     await bot.send_document(call.message.chat.id, file)
     await bot.send_message(call.message.chat.id, 'Нажмите кнопку Назад, чтобы вернутся в меню',
@@ -197,10 +214,10 @@ async def change_user(call: CallbackQuery, callback_data: dict, state: FSMContex
     else:
         await bot.answer_callback_query(call.id)
         async with state.proxy() as data:
-            name_user = CommandsDB.get_user_with_id(callback_data['name'])[0][0]
+            name_user = CommandsDB.get_user_with_id(callback_data['name'])[0]
             data['edit_user'] = name_user
             await StatesAdminUser.edit_user.set()
-            await call.message.edit_text(f'Выбранная компания: {"<b>"}{name_user}{"</b>"}\n'
+            await call.message.edit_text(f'Выбранная компания: {"<b>"}{data["edit_user"]}{"</b>"}\n'
                                          f'Выберите поле для изменения.',
                                          parse_mode="HTML", reply_markup=KBLines.btn_change_user('CHANGE_USER'))
 

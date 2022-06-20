@@ -335,8 +335,8 @@ class CommandsDB:
     @staticmethod
     def get_all_str_from_table() -> list:
         TB = TableWork
-        rows = session.query(TB.work_sting_id,TB.user_name,
-                             TB.contractor, TB.name_stage, TB.name_build, TB.name_level,
+        rows = session.query(TB.work_sting_id, TB.user_name, TB.contractor, TB.name_work, TB.date_created,
+                             TB.name_stage, TB.name_build, TB.name_level,
                              TB.number_security_p, TB.number_security_f, TB.number_duty_p, TB.number_duty_f,
                              TB.number_worker_p, TB.number_worker_f, TB.number_ITR_p, TB.number_ITR_f,
                              ).all()
