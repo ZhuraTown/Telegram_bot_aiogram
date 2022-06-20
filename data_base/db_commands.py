@@ -220,7 +220,7 @@ class CommandsDB:
     #   ЗАПИСЬ ФОРМЫ ТАБЕЛЯ
     ###############################
     @staticmethod
-    def add_new_string_work(user_name: str, name_work: str, name_stage: str,
+    def add_new_string_work(user_name: str, name_work: str, name_stage: int,
                             name_build: str, level: str,
                             number_security: list,
                             number_duty: list,
