@@ -105,7 +105,6 @@ def page_user():
                                                number_itr=[int(form_sheet['itr_p']),
                                                            int(form_sheet['itr_f'])])
         form_sheet = {}
-        print(data)
         if data.get('select-form'):
             ids = data.get('id-str-form')
             for line in range(0, len(data.get('select-form'))):

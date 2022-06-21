@@ -6,4 +6,4 @@ asdasd.py
 /venv
 .idea
 /data_base/tg_bot
-.xlsx
+*.xlsx

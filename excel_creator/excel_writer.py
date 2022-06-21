@@ -24,6 +24,7 @@ class ExcelFormat:
         data_format.set_bold()
         data_format.set_border(1)
         data_format.set_align('centre')
+        data_format.set_align('vcenter')
         data_format.set_font_size(18)
         return data_format
 
@@ -45,6 +46,7 @@ class ExcelFormat:
         else:
             companies_format.set_border(1)
         companies_format.set_align('centre')
+        companies_format.set_align('vcenter')
         companies_format.set_font_size(18)
         return companies_format
 
@@ -107,6 +109,7 @@ class ExcelFormat:
             tb_plan.set_border(1)
         tb_plan.set_bg_color("#F2F2F2")
         tb_plan.set_align('centre')
+        tb_plan.set_align('vcenter')
         tb_plan.set_font_size(18)
         return tb_plan
 
@@ -117,11 +120,9 @@ class ExcelWriter:
     __time_sheet_xls_dir = 'time_sheet_xls'
     __path_to_dir = os.path.join(__path, __excel_creator_dir, __time_sheet_xls_dir)
 
-    def __init__(self, name_document: str, contractors: list, stages: list):
+    def __init__(self, name_document: str):
         self.date = datetime.datetime.today().date()
         self.name = f"{name_document}_{self.date}.xlsx"
-        self.gen_contractor = contractors
-        self.stages = stages
         # Создание папки для хранения отчетов
         if not os.path.exists(self.__path_to_dir):
             os.mkdir(self.__path_to_dir)
@@ -170,17 +171,19 @@ class ExcelWriter:
             cont = '_'.join(cont.split(']'))
         self.worksheet = self.workbook.add_worksheet(name=cont)
         self.worksheet.set_default_row(28)
+        self._total_plan_fact_companies = {}
 
     def close(self):
         self.workbook.close()
 
-    def _write_title_work(self, count_companies: int):
+    def _write_title_work(self, count_companies: int, stages_db: list):
         """ Заполнение оглавления табеля (Численность персонала, задействованного...) """
-        len_title = 4 + count_companies * 4 + 2
+        len_title = 4 + count_companies * 8 + 2
         row_title = 1
-        self.stages.sort()
-        self.stages = [str(i) for i in self.stages]
-        stages_for_title = ', '.join(self.stages)
+        stages = stages_db
+        stages.sort()
+        stages = [str(i) for i in stages]
+        stages_for_title = ', '.join(stages)
         a = f'Численность персонала, задействованного на этапах {stages_for_title}  по Обустройству МФК "Лахта центр'
         self.worksheet.merge_range(row_title, 0, row_title, len_title, a, self.format.title_format())
 
@@ -205,26 +208,48 @@ class ExcelWriter:
 
     def write_companies_to_tb(self, nms_comps: list):
         """ Заполнение таблицы Подрядчики (Компания План Факт Дефицит) """
+        self._row_compis_in_total_tb = self.cur_row
         col_comp, col_pl, col_f, col_def = 0, 4, 6, 8
         num_0 = 0
         for name in nms_comps:
             self.worksheet.merge_range(self.cur_row, col_comp, self.cur_row, col_comp + 3,
                                        name, self.format.companies_format(set_bold=False))
-            self.worksheet.merge_range(self.cur_row, col_pl, self.cur_row, col_pl + 1,
-                                       num_0, self.format.tb_plan_format(set_bold=False, set_border=False))
-            self.worksheet.merge_range(self.cur_row, col_f, self.cur_row, col_f + 1,
-                                       num_0, self.format.companies_format(set_bold=False))
-            self.worksheet.merge_range(self.cur_row, col_def, self.cur_row, col_def + 1,
-                                       num_0, self.format.companies_format(set_bold=False))
+            # Старый кусок кода
+            # self.worksheet.merge_range(self.cur_row, col_pl, self.cur_row, col_pl + 1,
+            #                            num_0, self.format.tb_plan_format(set_bold=False, set_border=False))
+            # self.worksheet.merge_range(self.cur_row, col_f, self.cur_row, col_f + 1,
+            #                            num_0, self.format.companies_format(set_bold=False))
+            # self.worksheet.merge_range(self.cur_row, col_def, self.cur_row, col_def + 1,
+            #                            num_0, self.format.companies_format(set_bold=False))
             self.cur_row += 1
 
-        self.worksheet.merge_range(self.cur_row, col_comp, self.cur_row, col_comp + 3,
+    def write_total_nums_works_to_tb(self, nms_comps: list):
+        row = self._row_compis_in_total_tb
+        col_comp,col_pl, col_f, col_def = 0, 4, 6, 8
+        nums = self._total_plan_fact_companies
+        for name in nms_comps:
+            self.worksheet.merge_range(row, col_pl, row, col_pl + 1,
+                                       nums[name]['План'], self.format.tb_plan_format(set_bold=False, set_border=False))
+            self.worksheet.merge_range(row, col_f, row, col_f + 1,
+                                       nums[name]['Факт'], self.format.companies_format(set_bold=False))
+            self.worksheet.merge_range(row, col_def, row, col_def + 1,
+                                       nums[name]['Факт'] - nums[name]['План'], self.format.companies_format(set_bold=False))
+            row += 1
+
+        # Подсчет итого План и Факт по компаниям
+        sum_p = 0
+        sum_f = 0
+        for name in nums:
+            sum_p += nums[name]['План']
+            sum_f += nums[name]['Факт']
+
+        self.worksheet.merge_range(row, col_comp, row, col_comp + 3,
                                    "Итого", self.format.companies_format(set_border=True))
-        self.worksheet.merge_range(self.cur_row, col_pl, self.cur_row, col_pl + 1,
-                                   num_0, self.format.tb_plan_format(set_border=True))
-        self.worksheet.merge_range(self.cur_row, col_f, self.cur_row, col_f + 1,
-                                   num_0, self.format.companies_format(set_border=True))
-        self.worksheet.merge_range(self.cur_row, col_def, self.cur_row, col_def + 1,
+        self.worksheet.merge_range(row, col_pl, row, col_pl + 1,
+                                   sum_p, self.format.tb_plan_format(set_border=True))
+        self.worksheet.merge_range(row, col_f, row, col_f + 1,
+                                   sum_f, self.format.companies_format(set_border=True))
+        self.worksheet.merge_range(row, col_def, row, col_def + 1,
                                    ' ', self.format.companies_format(set_border=True))
 
     def write_title_tb_tm_sh(self):
@@ -253,15 +278,17 @@ class ExcelWriter:
             self.worksheet.set_column(col_comp, col_comp + 7, width=6)
             self.worksheet.merge_range(row_name_comp, col_comp, row_name_comp, col_comp + 7,
                                        comp_and_work[0], self.format.tb_tm_sh_title())
-            self.column_companies_work[comp_and_work[0]] = {}
-            name_work = comp_and_work[1] if len(comp_and_work) > 1 else 'Нет наименования работ'
+            # name_work = comp_and_work[1] if len(comp_and_work) > 1 else 'Нет наименования работ'
             self.worksheet.merge_range(row_name_work, col_comp, row_name_work, col_comp + 7,
-                                       name_work, self.format.tb_tm_sh_title())
-            self.column_companies_work[comp_and_work[0]][name_work] = {}
+                                       comp_and_work[1], self.format.tb_tm_sh_title())
+
+            # Сохраняю номер колонки для Подрядчика и наименования работ
+            self.column_companies_work[(comp_and_work[0], comp_and_work[1])] = col_comp
+            # Создаю счетчик для компании по сотрудникам План и Факт
+            if not self._total_plan_fact_companies.get(comp_and_work[0]):
+                self._total_plan_fact_companies[comp_and_work[0]] = {"План": 0, "Факт": 0}
 
             titles = ['Охрана', "Дежурный", "Рабочие", "ИТР ПТО"]
-            # Сохраняю номер колонки для Подрядчика и наименования работ
-            self.column_companies_work[comp_and_work[0]][name_work] = col_comp
 
             for i, title in zip(range(0, 4), titles):
                 self.worksheet.merge_range(row_titles_workers, col_comp + i * 2, row_titles_workers,
@@ -296,8 +323,11 @@ class ExcelWriter:
             if line[0] not in for_line:
                 for_line[line[0]] = 0
                 format_cell = self.format.tb_cell_write(grey=color, set_top_line=True)
-                format_cell_r = self.format.tb_cell_write(grey=color, set_top_line=True, set_right_line=True)
-                format_cell_r_b = self.format.tb_cell_write(grey=color, set_top_line=True, set_right_line_b=True)
+                format_cell_b = self.format.tb_cell_write(grey=color, set_top_line=True, set_bold=True)
+                format_cell_r = self.format.tb_cell_write(grey=color, set_top_line=True,
+                                                          set_right_line=True, set_bold=True)
+                format_cell_r_b = self.format.tb_cell_write(grey=color, set_top_line=True,
+                                                            set_right_line_b=True, set_bold=True)
                 self.worksheet.write(row, cols[3], line[3], self.format.tb_cell_write(grey=color,
                                                                                       set_right_line=True,
                                                                                       set_top_line=True))
@@ -311,15 +341,11 @@ class ExcelWriter:
                     else:
                         self.worksheet.write(row, i, '', format_cell)
                     num_a += 1
-                # self.worksheet.set_row(row, 28, self.format.tb_cell_write(grey=color, set_top_line=True))
-                # self.worksheet.conditional_format(row, 0, row, 3, {"type": "blanks", 'format': self.format.tb_cell_write(grey=color, set_top_line=True, )})
-                # self.worksheet.conditional_format(row, 0, row, 3, {"type": "no_blanks", 'format': self.format.tb_cell_write(grey=color, set_top_line=True, )})
-                # self.worksheet.conditional_format(row, 4, row, 50, {"type": "no_blanks", 'format': self.format.tb_cell_write(grey=color, set_top_line=True, set_bold=True)})
-                # self.worksheet.conditional_format(row, 4, row, 50, {"type": "no_blanks", 'format': self.format.tb_cell_write(grey=color, set_top_line=True, set_bold=True)})
             else:
                 format_cell = self.format.tb_cell_write(grey=color)
-                format_cell_r = self.format.tb_cell_write(grey=color, set_right_line=True)
-                format_cell_r_b = self.format.tb_cell_write(grey=color, set_right_line_b=True)
+                format_cell_b = self.format.tb_cell_write(grey=color, set_bold=True)
+                format_cell_r = self.format.tb_cell_write(grey=color, set_right_line=True, set_bold=True)
+                format_cell_r_b = self.format.tb_cell_write(grey=color, set_right_line_b=True, set_bold=True)
                 self.worksheet.write(row, cols[3], line[3], self.format.tb_cell_write(grey=color,
                                                                                       set_right_line=True))
                 num_a = 1
@@ -332,16 +358,10 @@ class ExcelWriter:
                     else:
                         self.worksheet.write(row, i, '', format_cell)
                     num_a += 1
-                # self.worksheet.set_row(row, 28, self.format.tb_cell_write(grey=color))
-                # self.worksheet.conditional_format(row, 0, row, 3, {"type": "blanks", 'format': self.format.tb_cell_write(grey=color)})
-                # self.worksheet.conditional_format(row, 0, row, 3, {"type": "no_blanks", 'format': self.format.tb_cell_write(grey=color)})
-                # self.worksheet.conditional_format(row, 0, row, 50, {"type": "blanks", 'format': self.format.tb_cell_write(grey=color, set_bold=True)})
-                # self.worksheet.conditional_format(row, 0, row, 50, {"type": "no_blanks", 'format': self.format.tb_cell_write(grey=color, set_bold=True)})
             self.worksheet.write(row, cols[0], int(line[0]), format_cell)
             self.worksheet.write(row, cols[1], line[1], format_cell)
             self.worksheet.write(row, cols[2], line[2], format_cell)
-            # self.worksheet.write(row, cols[3], line[3], self.format.tb_cell_write(grey=color, set_right_line=True))
-            self.rows_stage_build_work[(int(line[0]), line[1], line[2], line[3])] = [row, format_cell, format_cell_r, format_cell_r_b]
+            self.rows_stage_build_work[(int(line[0]), line[1], line[2], line[3])] = [row, format_cell_b, format_cell_r, format_cell_r_b]
             row += 1
 
         for i in range(0, self._last_colm_workers + 2):
@@ -367,15 +387,19 @@ class ExcelWriter:
             form_cell = self.rows_stage_build_work[(line[0], line[1], line[2], line[3])][1]
             form_cell_r = self.rows_stage_build_work[(line[0], line[1], line[2], line[3])][2]
             form_cell_r_b = self.rows_stage_build_work[(line[0], line[1], line[2], line[3])][3]
-            columns = self.column_companies_work[line[4]][line[5]]
+            columns = self.column_companies_work[(line[4], line[5])]
             numbers = line[6::]
             for nums, col, num_col in zip(numbers, range(columns, columns + 8), range(1, 9)):
-                if num_col == 8:
-                    self.worksheet.write(row, col, nums, form_cell_r_b)
-                elif num_col % 2 == 0:
-                    self.worksheet.write(row, col, nums, form_cell_r)
+                if num_col % 2 == 1:
+                    self._total_plan_fact_companies[line[4]]['План'] += nums
                 else:
-                    self.worksheet.write(row, col, nums, form_cell)
+                    self._total_plan_fact_companies[line[4]]['Факт'] += nums
+                if num_col == 8:
+                    self.worksheet.write(row, col, nums if nums != 0 else '', form_cell_r_b)
+                elif num_col % 2 == 0:
+                    self.worksheet.write(row, col, nums if nums != 0 else '', form_cell_r)
+                else:
+                    self.worksheet.write(row, col, nums if nums != 0 else '', form_cell)
 
     def write_results_formulas_bottom(self):
         """ Формулы в строке ИТОГО внизу таблицы """
@@ -416,30 +440,33 @@ class ExcelWriter:
         self.worksheet.write_formula(f'{lt_fact}{res_row}', f"=SUM({lt_fact}{row_for_st}:{lt_fact}{row_for_fn})",
                                      self.format.tb_cell_write(set_bold=True, set_bold_border=True))
 
-    def create_table_header(self, cont: str):
+    def create_table_header(self, cont: str, stages_db: list, num_comps: int):
         """ Создание заголовка таблциы, наименоване листа, даты и шапки для таблицы подрядчиков """
         self._add_worksheet(cont)
-        self._write_title_work(8)
+        self._write_title_work(num_comps, stages_db)
         self._write_date_work()
         self._write_title_table_companies()
 
-
-# from data_base.db_commands import CommandsDB
 #
-# contractors = CommandsDB.get_contractors_today_from_form()
-# stages = CommandsDB.get_stages_today_from_form()
-# aa = ExcelWriter('First_doc', contractors, stages)
-# for contractor in contractors:
-#     aa.create_table_header(contractor)
-#     comps = CommandsDB.get_names_all_users(without_admin=True)
-#     comps_and_work = CommandsDB.get_names_work_companies_from_form()
-#     # Запрос Этап, Здание, Этаж, Ген подрядчик
-#     lns_from_form_with_contactor = CommandsDB.get_all_str_from_form_with_cont(contractor)
-#     aa.write_companies_to_tb(comps)
-#     aa.write_title_tb_tm_sh()
-#     aa.write_title_companies_tb(comps_and_work)
-#     aa.write_builds_st_lv_tb(lns_from_form_with_contactor)
-#     aa.write_nums_workers(lns_from_form_with_contactor)
-#     aa.write_results_formulas_bottom()
-#     aa.write_results_formulas_right()
-# aa.close()
+from data_base.db_commands import CommandsDB
+
+contractors = CommandsDB.get_contractors_today_from_form()
+aa = ExcelWriter('First_doc')
+
+for contractor in contractors:
+    stages = CommandsDB.get_stages_today_from_form(contractor)
+    comps = CommandsDB.get_names_all_users(without_admin=True)
+    comps_and_work = CommandsDB.get_names_work_companies_from_form()
+
+    aa.create_table_header(contractor, stages, len(comps))
+    # Заполнение Этап, Здание, Этаж, Ген подрядчик
+    lns_from_form_with_contactor = CommandsDB.get_all_str_from_form_with_cont(contractor)
+    aa.write_companies_to_tb(comps)
+    aa.write_title_tb_tm_sh()
+    aa.write_title_companies_tb(comps_and_work)
+    aa.write_builds_st_lv_tb(lns_from_form_with_contactor)
+    aa.write_nums_workers(lns_from_form_with_contactor)
+    aa.write_results_formulas_bottom()
+    aa.write_results_formulas_right()
+    aa.write_total_nums_works_to_tb(comps)
+aa.close()

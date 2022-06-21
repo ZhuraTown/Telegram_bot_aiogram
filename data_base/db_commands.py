@@ -58,9 +58,9 @@ class CommandsDB:
     @staticmethod
     def get_names_all_users(without_admin=False) -> list:
         if without_admin:
-            return [name[0] for name in session.query(User.name).filter(User.admin == False).all()]
+            return [name[0] for name in session.query(User.name).filter(User.admin == False).order_by(User.name).all()]
         else:
-            return [name[0] for name in session.query(User.name).all()]
+            return [name[0] for name in session.query(User.name).order_by(User.name).all()]
 
     @staticmethod
     def add_user_system(name: str, password: str or int, comment: str = None, admin: bool = False):
@@ -251,7 +251,7 @@ class CommandsDB:
                            tb.name_stage == name_stage, tb.name_build == name_build,
                            tb.name_level == level, tb.date_created == date, tb.contractor == contractor).count() == 0:
                 session.add(TableWork(user_name=user_name, name_work=name_work, name_stage=name_stage,
-                                      name_build=name_build, name_level=level,
+                                      name_build=name_build, name_level=level.upper(),
                                       number_security_p=number_security[0], number_security_f=number_security[1],
                                       number_duty_p=number_duty[0], number_duty_f=number_duty[1],
                                       number_worker_p=number_worker[0], number_worker_f=number_worker[1],
@@ -278,7 +278,7 @@ class CommandsDB:
         tb = TableWork
         try:
             session.query(tb).filter(tb.work_sting_id == id_string). \
-                update({"name_stage": name_stage, 'name_build': name_build, 'name_level': level,
+                update({"name_stage": name_stage, 'name_build': name_build, 'name_level': level.upper(),
                         'number_security_p': number_security[0], 'number_security_f': number_security[1],
                         'number_duty_p': number_duty[0], 'number_duty_f': number_duty[1],
                         'number_worker_p': number_worker[0], 'number_worker_f': number_worker[1],
@@ -337,7 +337,8 @@ class CommandsDB:
             filter(TableWork.user_name == user_name,
                    TableWork.name_work == name_work,
                    TableWork.date_created == date_today,
-                   TableWork.contractor == contractor).all()
+                   TableWork.contractor == contractor)\
+            .order_by(TableWork.name_stage, TableWork.name_build, TableWork.name_level).all()
         return [id_form.work_sting_id for id_form in rows]
 
     @staticmethod
@@ -347,9 +348,11 @@ class CommandsDB:
         return [i[0] for i in row]
 
     @staticmethod
-    def get_stages_today_from_form() -> list:
+    def get_stages_today_from_form(cont: str) -> list:
+        """ Получить из БД Этапы работы с ген подрядчиком"""
         date_today = datetime.today().date()
-        row = session.query(TableWork.name_stage).filter(TableWork.date_created == date_today).distinct().all()
+        row = session.query(TableWork.name_stage).filter(TableWork.date_created == date_today,
+                                                         TableWork.contractor == cont).distinct().all()
         return [i[0] for i in row]
 
     @staticmethod
@@ -381,7 +384,7 @@ class CommandsDB:
                              TB.number_duty_p, TB.number_duty_f,
                              TB.number_worker_p, TB.number_worker_f,
                              TB.number_ITR_p, TB.number_ITR_f
-                             ).filter(TB.contractor == cont, TB.date_created == date_today).order_by(TB.name_stage, TB.name_build).all()
+                             ).filter(TB.contractor == cont, TB.date_created == date_today).order_by(TB.name_stage, TB.name_build, TB.name_level).all()
         return rows
 
     @staticmethod

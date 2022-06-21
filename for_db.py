@@ -41,10 +41,12 @@ import random
 #     ## print(line)
 
 #
-# cont = "ЕСТ"
-# for line in CommandsDB.get_all_str_from_form_with_cont(cont):
+cont = "АПА"
+for line in CommandsDB.get_all_str_from_form_with_cont(cont):
+    print(line)
+#
+# for line in CommandsDB.get_all_str_from_table():
 #     print(line)
-    # print(line[6::])
 
 # Наименования работ
 # names_work = ['АУВПТ, ВПВ', 'Обеспечение', '"Электрика(ЭОМ,СГП)"', 'Связь', 'Вода(ОВ1)']
