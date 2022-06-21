@@ -3,7 +3,7 @@ __pycache__
 *.py[cod]
 *$py.class
 asdasd.py
-/google_api/creadentals.json
 /venv
 .idea
 /data_base/tg_bot
+.xlsx
