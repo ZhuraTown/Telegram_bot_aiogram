@@ -44,23 +44,23 @@ async def get_table_time_sheet(call: CallbackQuery, state: FSMContext, callback_
     await call.message.edit_text(f'Таблица подрядчиков за:{"<b>"}{date_today}{"</b>"}',
                                  parse_mode='HTML', reply_markup=None)
     contractors_today = CommandsDB.get_contractors_today_from_form()
-    xlsx_file = ExcelWriter('Отчет_по_табелю', contractors_today)
+    stages = CommandsDB.get_stages_today_from_form()
+    xlsx_file = ExcelWriter('Отчет_по_табелю', contractors_today, stages)
     path_to_file = xlsx_file.get_path_to_file()
-    xlsx_file.create_table_header()
-    comps = CommandsDB.get_names_all_users(without_admin=True)
-    comps_and_work = CommandsDB.get_names_work_companies_from_form()
-    lines = [('2', 'Б1', 'L15', 'ЕСТ'),
-             ('2', 'Б1', 'L13', 'ЕСТ'),
-             ('2', 'Б1', 'L12', 'ЕСТ'),
-             ('2', 'Б1', 'L11', 'ЕСТ'),
-             ('5', 'Б1', 'L10', 'ЕСТ'),
-             ('5', 'Б2', 'L58', 'ЕСТ'),
-             ('13', 'Офис', 'L1', 'ЕСТ'),
-             ('13', 'Стилбат', 'L6', 'ЕСТ')]
-    xlsx_file.write_companies_to_tb(comps)
-    xlsx_file.write_title_tb_tm_sh()
-    xlsx_file.write_title_companies_tb(comps_and_work)
-    xlsx_file.write_builds_st_lv_tb(lines)
+    contractors = CommandsDB.get_contractors_today_from_form()
+    for contractor in contractors:
+        xlsx_file.create_table_header(contractor)
+        comps = CommandsDB.get_names_all_users(without_admin=True)
+        comps_and_work = CommandsDB.get_names_work_companies_from_form()
+        # Запрос Этап, Здание, Этаж, Ген подрядчик
+        lns_from_form_with_contactor = CommandsDB.get_all_str_from_form_with_cont(contractor)
+        xlsx_file.write_companies_to_tb(comps)
+        xlsx_file.write_title_tb_tm_sh()
+        xlsx_file.write_title_companies_tb(comps_and_work)
+        xlsx_file.write_builds_st_lv_tb(lns_from_form_with_contactor)
+        xlsx_file.write_nums_workers(lns_from_form_with_contactor)
+        xlsx_file.write_results_formulas_bottom()
+        xlsx_file.write_results_formulas_right()
     xlsx_file.close()
     file = open(path_to_file, 'rb')
     await bot.send_document(call.message.chat.id, file)

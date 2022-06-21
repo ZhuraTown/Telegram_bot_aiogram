@@ -12,6 +12,7 @@ class CommandsDB:
     @staticmethod
     def create_db():
         base.metadata.create_all(engine)
+        CommandsDB.add_admin_user()
 
     ##############################
     #       ПОЛЬЗОВАТЕЛИ
@@ -22,6 +23,21 @@ class CommandsDB:
         return my_query
 
     @staticmethod
+    def add_admin_user():
+        try:
+            if not session.query(User.name, User.user_id).filter(User.admin == True).all():
+                session.add(User(name='Администратор',
+                                 password="000000",
+                                 comment="Администратор",
+                                 admin=True))
+                session.flush()
+        except Exception as e:
+            print(f'Не удалось добавить администратора в БД {e}')
+            session.rollback()
+        finally:
+            session.commit()
+
+    @staticmethod
     def get_user_id_with_name(name_user: str):
         return session.query(User.user_id).filter(User.name == name_user).one()
 
@@ -30,7 +46,7 @@ class CommandsDB:
         if not user_password:
             if without_admin:
                 rows = session.query(User.user_id, User.name, User.comment, User.password, User.admin).filter(
-                    User.admin == False).all()
+                    User.admin == False).order_by(User.name).all()
             else:
                 rows = session.query(User.user_id, User.name, User.comment, User.password, User.admin).all()
             return rows
@@ -130,7 +146,7 @@ class CommandsDB:
     @staticmethod
     def add_name_work(name, user) -> bool:
         try:
-            if session.query(TableNameWork.work_name).filter(TableNameWork.work_name == name).count() == 0:
+            if session.query(TableNameWork.work_name).filter(TableNameWork.work_name == name, TableNameWork.user_id == user).count() == 0:
                 name_work = TableNameWork(work_name=name, user_id=user)
                 session.add(name_work)
                 session.flush()
@@ -331,6 +347,12 @@ class CommandsDB:
         return [i[0] for i in row]
 
     @staticmethod
+    def get_stages_today_from_form() -> list:
+        date_today = datetime.today().date()
+        row = session.query(TableWork.name_stage).filter(TableWork.date_created == date_today).distinct().all()
+        return [i[0] for i in row]
+
+    @staticmethod
     def get_names_work_companies_from_form():
         date_today = datetime.today().date()
         row = session.query(TableWork.user_name, TableWork.name_work).filter(
@@ -359,8 +381,7 @@ class CommandsDB:
                              TB.number_duty_p, TB.number_duty_f,
                              TB.number_worker_p, TB.number_worker_f,
                              TB.number_ITR_p, TB.number_ITR_f
-                             ).filter(TB.contractor == cont, TB.date_created == date_today).\
-            order_by(TB.name_stage, TB.name_build).all()
+                             ).filter(TB.contractor == cont, TB.date_created == date_today).order_by(TB.name_stage, TB.name_build).all()
         return rows
 
     @staticmethod

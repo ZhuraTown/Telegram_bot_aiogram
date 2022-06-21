@@ -3,7 +3,6 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 
 from data_base.db_commands import CommandsDB
-from keyboards.classic_kb import kb_start, kb_admin_panel, kb_user_panel
 from keyboards.inlines_kb.callback_datas import menu_callback_user
 from keyboards.inlines_kb.kb_inlines import KBLines
 from memory_FSM.bot_memory import StatesAdminUser, AuthorizationUser, StatesUsers

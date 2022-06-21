@@ -3,9 +3,11 @@ from datetime import datetime
 from data_base.db_commands import CommandsDB
 import random
 
-coms = CommandsDB.get_all_users(without_admin=True)
-date_today = datetime.today().date()
 
+# Записи в БД
+# coms = CommandsDB.get_all_users(without_admin=True)
+# date_today = datetime.today().date()
+#
 # stgs = [5, 10, 13, 15]
 # contractor = [coms[0][1], coms[1][1]]
 # builds = [i[1] for i in CommandsDB.get_all_names_builds()]
@@ -38,8 +40,16 @@ date_today = datetime.today().date()
 #     CommandsDB.del_str_form_with_name_work_or_id_form(line[0])
 #     ## print(line)
 
-
+#
 # cont = "ЕСТ"
 # for line in CommandsDB.get_all_str_from_form_with_cont(cont):
 #     print(line)
-#     print(line[6::])
+    # print(line[6::])
+
+# Наименования работ
+# names_work = ['АУВПТ, ВПВ', 'Обеспечение', '"Электрика(ЭОМ,СГП)"', 'Связь', 'Вода(ОВ1)']
+# for user, name in zip(CommandsDB.get_all_users(without_admin=True), names_work):
+#     # CommandsDB.add_name_work(name, user[0])
+#     print(user)
+#
+# CommandsDB.add_name_work('Обеспечение', 2)

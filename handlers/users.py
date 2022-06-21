@@ -12,6 +12,16 @@ from memory_FSM.bot_memory import StatesUsers, AuthorizationUser
 from flask_server.generator_url import GeneratorUrlFlask
 
 
+def except_raise(func):
+    async def wrapper():
+        try:
+            return await func()
+        except Exception as e:
+            print(f'Ошибка {e}')
+            
+    return wrapper
+
+
 ########################
 #      ГЛАВНОЕ МЕНЮ
 ########################
