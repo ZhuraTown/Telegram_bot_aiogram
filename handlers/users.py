@@ -76,17 +76,24 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext):
 async def get_forms_user(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await call.answer(cache_time=3)
     await StatesUsers.edit_form.set()
-    async with state.proxy() as data:
-        company = data['user_name']
-        value_from_callback_data = callback_data.get('name').split(',')
-        name_work = CommandsDB.get_name_work_for_id(value_from_callback_data[0]).work_name
-        contractor = CommandsDB.get_user_with_id(value_from_callback_data[1]).name
-        ids_form = CommandsDB.get_ids_str_form_with_work_user_today(user_name=company,
-                                                                    name_work=name_work, contractor=contractor)
-        url = GeneratorUrlFlask.get_url_for_edit_form(company=company, work=name_work,
-                                                      ids=ids_form, contractor=contractor)
-        await call.message.edit_text(f'Ссылка на изменение формы:\n {url}',
-                                     reply_markup=KBLines.btn_back('EDIT_FORM'))
+    try:
+        async with state.proxy() as data:
+            company = data['user_name']
+            value_from_callback_data = callback_data.get('name').split(',')
+            name_work = CommandsDB.get_name_work_for_id(value_from_callback_data[0]).work_name
+            contractor = CommandsDB.get_user_with_id(value_from_callback_data[1]).name
+            ids_form = CommandsDB.get_ids_str_form_with_work_user_today(user_name=company,
+                                                                        name_work=name_work, contractor=contractor)
+            url = GeneratorUrlFlask.get_url_for_edit_form(company=company, work=name_work,
+                                                          ids=ids_form, contractor=contractor)
+            print(url)
+            await call.message.edit_text(f'[Ссылка на изменение формы]({url})',
+                                         reply_markup=KBLines.btn_back('EDIT_FORM'), parse_mode="MarkdownV2")
+    except Exception as e:
+        print('Ошибка!', e)
+        await call.message.edit_text(f'Произошла ошибка при формировании ссылки на форму. Обратитесь к Администратору',
+                                     reply_markup=KBLines.btn_back('EDIT_FORM'), parse_mode="MarkdownV2")
+
 
 
 ##########################

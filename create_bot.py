@@ -1,9 +1,10 @@
 import logging
+from decouple import config
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 # @Random_zhura_45_bot
-API_TOKEN = "1913518174:AAHB6daABGP9G3Ec93_4bnJHQWXSjtbyZiM"
+API_TOKEN = config('API_TOKEN')
 
 storage = MemoryStorage()
 

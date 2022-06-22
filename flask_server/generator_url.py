@@ -1,4 +1,5 @@
 from decouple import config
+from urllib.parse import quote
 
 class GeneratorUrlFlask:
 
@@ -17,4 +18,5 @@ class GeneratorUrlFlask:
         company_list, work_list, contractor_list = company.split(), work.split(), contractor.split()
         company, work, contractor = '%20'.join(company_list), '%20'.join(work_list), '%20'.join(contractor_list)
         ids = ','.join([str(i) for i in ids])
-        return f"{config('URL_SERVER')}edit_form?&company={company}&contractor={contractor}&work={work}&ids={ids}"
+        # return f"{config('URL_SERVER')}edit_form?&company={company}&contractor={contractor}&work={work}&ids={ids}"
+        return f"{config('URL_SERVER')}edit_form?&company=" + quote(company) + "&contractor=" + quote(contractor) + "&work=" + quote(work) + f"&ids={ids}"

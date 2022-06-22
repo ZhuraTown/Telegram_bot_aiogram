@@ -1,6 +1,7 @@
 // import { URL_WORK } from '../../../constants'
 
-const URL_WORK = "http://127.0.0.1:5000"
+// const URL_WORK = "http://127.0.0.1:5000"
+const URL_WORK = "http://c120-194-186-155-46.eu.ngrok.io/"
 
 
 function add_str() {
@@ -93,7 +94,7 @@ async function getBuildForStateForm(){
     }
     let only_build = document.getElementById('build')
     if (only_build != null){
-    let response = await fetch(URL_WORK + "/builds",{
+    let response = await fetch(URL_WORK + "builds",{
         method: "GET"
     } ).then(response => response.json())
     for(let key in response){
@@ -107,7 +108,7 @@ async function getBuildsWithIdForm(id_select){
         let select = document.getElementById(id_select)
         select.append(newOption)
     }
-    let response = await fetch(URL_WORK + "/builds",{
+    let response = await fetch(URL_WORK + "builds",{
         method: "GET"
     } ).then(response => response.json())
     for(let key in response){
@@ -121,7 +122,7 @@ async function getContractors() {
         let select = document.getElementById("contractor")
         select.append(newOption)
     }
-        let response = await fetch(URL_WORK + "/contactors",{
+        let response = await fetch(URL_WORK + "contactors",{
         method: "GET"
     } ).then(response => response.json())
     let contractors = document.querySelectorAll("#contractor")
@@ -139,7 +140,7 @@ async function getBuilds(){
         element.append(newOption)
         }
     //    Запрашиваю имена зданий
-    let response = await fetch(URL_WORK + "/builds",{
+    let response = await fetch(URL_WORK + "builds",{
         method: "GET"
     } ).then(response => response.json())
     //  Собираю список всех доступных полей select, куда добавить здания

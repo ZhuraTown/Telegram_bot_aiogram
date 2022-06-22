@@ -41,10 +41,10 @@ import random
 #     ## print(line)
 
 #
-cont = "АПА"
-for line in CommandsDB.get_all_str_from_form_with_cont(cont):
-    print(line)
-#
+# cont = "АПА"
+# for line in CommandsDB.get_all_str_from_form_with_cont(cont):
+#     print(line)
+# #
 # for line in CommandsDB.get_all_str_from_table():
 #     print(line)
 

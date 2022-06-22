@@ -210,10 +210,9 @@ class ExcelWriter:
         """ Заполнение таблицы Подрядчики (Компания План Факт Дефицит) """
         self._row_compis_in_total_tb = self.cur_row
         col_comp, col_pl, col_f, col_def = 0, 4, 6, 8
-        num_0 = 0
         for name in nms_comps:
             self.worksheet.merge_range(self.cur_row, col_comp, self.cur_row, col_comp + 3,
-                                       name, self.format.companies_format(set_bold=False))
+                                       name[0], self.format.companies_format(set_bold=False))
             # Старый кусок кода
             # self.worksheet.merge_range(self.cur_row, col_pl, self.cur_row, col_pl + 1,
             #                            num_0, self.format.tb_plan_format(set_bold=False, set_border=False))
@@ -228,6 +227,7 @@ class ExcelWriter:
         col_comp,col_pl, col_f, col_def = 0, 4, 6, 8
         nums = self._total_plan_fact_companies
         for name in nms_comps:
+            name = name[0]
             self.worksheet.merge_range(row, col_pl, row, col_pl + 1,
                                        nums[name]['План'], self.format.tb_plan_format(set_bold=False, set_border=False))
             self.worksheet.merge_range(row, col_f, row, col_f + 1,
@@ -275,7 +275,7 @@ class ExcelWriter:
         col_comp = 4
         for comp_and_work in companies_and_work:
             """Сужаю по ширине столбцы"""
-            self.worksheet.set_column(col_comp, col_comp + 7, width=6)
+            self.worksheet.set_column(col_comp, col_comp + 7, width=7)
             self.worksheet.merge_range(row_name_comp, col_comp, row_name_comp, col_comp + 7,
                                        comp_and_work[0], self.format.tb_tm_sh_title())
             # name_work = comp_and_work[1] if len(comp_and_work) > 1 else 'Нет наименования работ'
@@ -448,25 +448,24 @@ class ExcelWriter:
         self._write_title_table_companies()
 
 #
-from data_base.db_commands import CommandsDB
-
-contractors = CommandsDB.get_contractors_today_from_form()
-aa = ExcelWriter('First_doc')
-
-for contractor in contractors:
-    stages = CommandsDB.get_stages_today_from_form(contractor)
-    comps = CommandsDB.get_names_all_users(without_admin=True)
-    comps_and_work = CommandsDB.get_names_work_companies_from_form()
-
-    aa.create_table_header(contractor, stages, len(comps))
-    # Заполнение Этап, Здание, Этаж, Ген подрядчик
-    lns_from_form_with_contactor = CommandsDB.get_all_str_from_form_with_cont(contractor)
-    aa.write_companies_to_tb(comps)
-    aa.write_title_tb_tm_sh()
-    aa.write_title_companies_tb(comps_and_work)
-    aa.write_builds_st_lv_tb(lns_from_form_with_contactor)
-    aa.write_nums_workers(lns_from_form_with_contactor)
-    aa.write_results_formulas_bottom()
-    aa.write_results_formulas_right()
-    aa.write_total_nums_works_to_tb(comps)
-aa.close()
+# from data_base.db_commands import CommandsDB
+#
+# contractors = CommandsDB.get_contractors_today_from_form()
+# aa = ExcelWriter('First_doc')
+#
+# for contractor in contractors:
+#     stages = CommandsDB.get_stages_today_from_form(contractor)
+#     comps_and_work = CommandsDB.get_names_work_companies_from_form()
+#
+#     aa.create_table_header(contractor, stages, len(comps_and_work))
+#     # Заполнение Этап, Здание, Этаж, Ген подрядчик
+#     lns_from_form_with_contactor = CommandsDB.get_all_str_from_form_with_cont(contractor)
+#     aa.write_companies_to_tb(comps_and_work)
+#     aa.write_title_tb_tm_sh()
+#     aa.write_title_companies_tb(comps_and_work)
+#     aa.write_builds_st_lv_tb(lns_from_form_with_contactor)
+#     aa.write_nums_workers(lns_from_form_with_contactor)
+#     aa.write_results_formulas_bottom()
+#     aa.write_results_formulas_right()
+#     aa.write_total_nums_works_to_tb(comps_and_work)
+# aa.close()
