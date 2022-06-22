@@ -12,13 +12,14 @@ from create_bot import dp, bot
 async def command_start(message: types.Message, state: FSMContext):
     await message.delete()
     await state.reset_state()
-    await message.answer('Цель бота, упростить заполнение табеля рабочего времени сотрудников Лахта Центр\n'
-                         'Введите PIN_CODE для входа в личный кабинет', reply_markup=None)
+    await message.answer('Введите PIN_CODE для входа в личный кабинет', reply_markup=None)
     await AuthorizationUser.write_password.set()
 
 
+
+
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выйти'],
-                                                     step_menu=['Step_MAIN']),
+                                                     step_menu=['USER_MAIN_PAGE']),
                            state=[StatesUsers.start_user_panel])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выйти'],
                                                      step_menu=['ADMIN_PANEL']),
@@ -45,7 +46,6 @@ async def authorization_step(message: types.Message, state: FSMContext):
                 await message.answer(
                     f'Введён верный PINCODE\nВы хотите продолжить как:{"<b>"}{pin_cods[msg][0]}{"</b>"}?\n'
                     f'Пользователь владеет правами {"<b>"}Администратора{"</b>"}.\n'
-                    f'Он может добавлять/удалять пользователей, получать полный отчёт о работах.\n'
                     f'Нажмите кнопку {"<b>"}Продолжить{"</b>"}, чтобы приступить к работе.\n'
                     f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
                     parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_ADMIN'))
@@ -55,13 +55,26 @@ async def authorization_step(message: types.Message, state: FSMContext):
 
             else:
                 await message.delete()
-                await message.answer(
-                    f'Введён верный PINCODE\nВы хотите продолжить как: {"<b>"}{pin_cods[msg][0]}{"</b>"}?\n'
-                    f'Нажмите кнопку {"<b>"}Продолжить{"</b>"}, чтобы приступить к работе.\n'
-                    f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
-                    parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_USER'))
+                #
                 data['user_name'] = pin_cods[msg][0]
                 data['id_user'] = pin_cods[msg][2]
+                data['is_GP'] = pin_cods[msg][4]
+                data['GP'] = pin_cods[msg][3]
+                if data['is_GP']:
+                    await message.answer(
+                        f'Вы авторизовались как ГП: {"<b>"}{pin_cods[msg][0]}{"</b>"}\n'
+                        f'Нажмите кнопку {"<b>"}Продолжить{"</b>"}, чтобы приступить к работе.\n'
+                        f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
+                        parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_USER'))
+                else:
+                    await message.answer(
+                        f'Вы авторизовались как подрядчик: \n'
+                        f'{"<b>"}{pin_cods[msg][0]}{"</b>"}\n'
+                        f'ГП: {"<b>"}{data["GP"]}{"</b>"}\n'
+                        f'Нажмите кнопку {"<b>"}Продолжить{"</b>"}, чтобы приступить к работе.\n'
+                        f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
+                        parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_USER'))
+
                 await AuthorizationUser.correct_password_user.set()
     else:
         await message.answer('Такого PINCODE нету в системе. Уточните свой пароль')
@@ -72,9 +85,7 @@ async def command_help(message: types.Message):
 
 
 def register_handlers_start_work(dp: Dispatcher):
-    dp.register_message_handler(command_start, lambda message: 'Выйти' in message.text,
-                                state=[StatesAdminUser.start_admin_panel])
-    dp.register_message_handler(authorization_step, state=[AuthorizationUser.write_password])
-    dp.register_message_handler(command_start, commands=['start'], state=None)
     dp.register_message_handler(command_start, commands=['start'], state=[AuthorizationUser.write_password])
     dp.register_message_handler(command_help, commands=['help'], state='*')
+    dp.register_message_handler(authorization_step, state=[AuthorizationUser.write_password])
+    dp.register_message_handler(command_start, content_types=types.ContentType.TEXT, state=None)

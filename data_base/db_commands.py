@@ -28,7 +28,6 @@ class CommandsDB:
             if not session.query(User.name, User.user_id).filter(User.admin == True).all():
                 session.add(User(name='Администратор',
                                  password="000000",
-                                 comment="Администратор",
                                  admin=True))
                 session.flush()
         except Exception as e:
@@ -42,18 +41,40 @@ class CommandsDB:
         return session.query(User.user_id).filter(User.name == name_user).one()
 
     @staticmethod
-    def get_all_users(user_password=False, without_admin=False) -> list or dict:
+    def get_all_users(user_password=False,
+                      contractor: bool = False, gp: str = None) -> list or dict:
+        """ Получить список пользователей в БД
+         user_password - получить словарь со всеми пользователями, ключ - PINCODE
+         contractor - получить из БД массив только с Ген Подрядчиками
+         gp - получить из БД массив подрядчиков только с ГП = gp"""
         if not user_password:
-            if without_admin:
-                rows = session.query(User.user_id, User.name, User.comment, User.password, User.admin).filter(
-                    User.admin == False).order_by(User.name).all()
+            if contractor:
+                rows = session.query(User.user_id, User.name, User.password).filter(User.contractor == True).all()
             else:
-                rows = session.query(User.user_id, User.name, User.comment, User.password, User.admin).all()
+                rows = session.query(User.user_id, User.name, User.password).\
+                    filter(User.cont_name == gp, User.contractor == False). \
+                    order_by(User.name).all()
             return rows
         else:
-            rows = {user[1]: [user[0], user[2], user[3]] for user in
-                    session.query(User.name, User.password, User.admin, User.user_id).all()}
+            rows = {user[1]: [user[0], user[2], user[3], user[4], user[5]] for user in
+                    session.query(User.name, User.password, User.admin, User.user_id,
+                                  User.cont_name, User.contractor).all()}
         return rows
+
+    @staticmethod
+    def get_all_get_contractors() -> list:
+        """ Получить отсортированный список кортежей с Ген подрядчиками"""
+        rows = session.query(User.user_id, User.name, User.password,
+                             User.admin, User.cont_name, User.contractor).order_by(User.name).all()
+        return rows
+
+    @staticmethod
+    def get_all_user_with_gp(gp: str) -> list:
+        return [name[0] for name in session.query(User.name).filter(User.cont_name == gp).order_by(User.name).all()]
+
+    @staticmethod
+    def get_all_gp() -> list:
+        return [name[0] for name in session.query(User.name).filter(User.contractor == True).order_by(User.name).all()]
 
     @staticmethod
     def get_names_all_users(without_admin=False) -> list:
@@ -63,17 +84,17 @@ class CommandsDB:
             return [name[0] for name in session.query(User.name).order_by(User.name).all()]
 
     @staticmethod
-    def add_user_system(name: str, password: str or int, comment: str = None, admin: bool = False):
+    def add_get_contractor(name: str, password: str or int):
+        """ Добавить ГП в БД """
         try:
             if session.query(User.name).filter(User.name == name).count() == 0:
                 session.add(User(name=name,
                                  password=password,
-                                 comment=comment,
-                                 admin=admin))
+                                 contractor=True))
                 session.flush()
                 return True
             else:
-                print(f"Пользователь с именем {name}, уже есть в БД")
+                print(f"Ген Подрядчик {name}, уже есть в БД")
                 return False
         except:
             session.rollback()
@@ -83,9 +104,63 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def update_name_user_with_name(name, new_name):
+    def add_user_with_gp(name: str, password: str or int, gp: str):
+        """ Добавить Подрядчика под ГП в БД """
         try:
-            session.query(User).filter(User.name == name).update({"name": new_name})
+            if session.query(User.name).filter(User.name == name, User.cont_name == gp).count() == 0:
+                session.add(User(name=name,
+                                 password=password,
+                                 contractor=False,
+                                 cont_name=gp))
+                session.flush()
+                return True
+            else:
+                print(f"Подрядчик {name}, уже есть в БД")
+                return False
+        except:
+            session.rollback()
+            print(f'Ошибка записи {name} в БД')
+            return False
+        finally:
+            session.commit()
+
+    # @staticmethod
+    # def add_user_system(name: str, password: str or int):
+    #     try:
+    #         if session.query(User.name).filter(User.name == name).count() == 0:
+    #             session.add(User(name=name,
+    #                              password=password,
+    #                              contractor=True))
+    #             session.flush()
+    #             return True
+    #         else:
+    #             print(f"Ген Подрядчик {name}, уже есть в БД")
+    #             return False
+    #     except:
+    #         session.rollback()
+    #         print(f'Ошибка записи {name} в БД')
+    #         return False
+    #     finally:
+    #         session.commit()
+
+    @staticmethod
+    def update_name_user_with_gp_with_name(name: str, new_name: str, gp: str):
+        try:
+            session.query(User).filter(User.name == name, User.cont_name == gp).update({"name": new_name})
+            session.flush()
+            print('Пользователь успешно изменён')
+            return True
+        except:
+            session.rollback()
+            print('Что-то пошло не так. Изменить пользователя не удалось')
+            return False
+        finally:
+            session.commit()
+
+    @staticmethod
+    def update_gp_user_with_name(name: str, new_name: str):
+        try:
+            session.query(User).filter(User.name == name, User.contractor == True).update({"name": new_name})
             session.flush()
             print('Пользователь успешно изменён')
             return True
@@ -98,7 +173,13 @@ class CommandsDB:
 
     @staticmethod
     def get_password_user_with_name(name):
+        """ Получить запись из БД с PINCOCDE пользователя с именем name """
         return session.query(User.password).filter(User.name == name).one()[0]
+
+    @staticmethod
+    def get_password_user_with_name_with_gp(name: str, gp: str):
+        """ Получить запись из БД с PINCOCDE пользователя с именем name и ГП gp"""
+        return session.query(User.password).filter(User.name == name, User.cont_name == gp).one()[0]
 
     @staticmethod
     def update_pincode_user_with_name(name, new_pin):
@@ -146,7 +227,8 @@ class CommandsDB:
     @staticmethod
     def add_name_work(name, user) -> bool:
         try:
-            if session.query(TableNameWork.work_name).filter(TableNameWork.work_name == name, TableNameWork.user_id == user).count() == 0:
+            if session.query(TableNameWork.work_name).filter(TableNameWork.work_name == name,
+                                                             TableNameWork.user_id == user).count() == 0:
                 name_work = TableNameWork(work_name=name, user_id=user)
                 session.add(name_work)
                 session.flush()
@@ -193,10 +275,12 @@ class CommandsDB:
     #             ЗДАНИЯ
     #################################
     @staticmethod
-    def add_name_build(name):
+    def add_name_build(name: str, gp: str) -> bool:
+        """ Добавить здание в БД с ГП (gp) """
         try:
-            if session.query(TableNameBuild.name_build).filter(TableNameBuild.name_build == name).count() == 0:
-                session.add(TableNameBuild(name_build=name))
+            if session.query(TableNameBuild.name_build).\
+                    filter(TableNameBuild.name_build == name, TableNameBuild.name_cont == gp).count() == 0:
+                session.add(TableNameBuild(name_build=name, name_cont=gp))
                 session.flush()
                 return True
             else:
@@ -225,6 +309,13 @@ class CommandsDB:
     def get_all_names_builds():
         rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build).order_by(
             TableNameBuild.name_build).all()
+        return rows
+
+    @staticmethod
+    def get_all_builds_with_gp(gp: str) -> list:
+        rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build, TableNameBuild.name_cont)\
+            .filter(TableNameBuild.name_cont == gp)\
+            .order_by(TableNameBuild.name_build).all()
         return rows
 
     @staticmethod
@@ -310,7 +401,7 @@ class CommandsDB:
         TB = TableWork
         return [(name.name_work, name.contractor) for name in
                 session.query(TB.name_work, TB.contractor).
-                    filter(TB.user_name == user_name, TB.date_created == date).distinct().all()]
+                filter(TB.user_name == user_name, TB.date_created == date).distinct().all()]
 
     @staticmethod
     def del_str_form_with_name_work_or_id_form(id_form: str or int = None, name_work: str = None):
@@ -337,7 +428,7 @@ class CommandsDB:
             filter(TableWork.user_name == user_name,
                    TableWork.name_work == name_work,
                    TableWork.date_created == date_today,
-                   TableWork.contractor == contractor)\
+                   TableWork.contractor == contractor) \
             .order_by(TableWork.name_stage, TableWork.name_build, TableWork.name_level).all()
         return [id_form.work_sting_id for id_form in rows]
 
@@ -384,7 +475,9 @@ class CommandsDB:
                              TB.number_duty_p, TB.number_duty_f,
                              TB.number_worker_p, TB.number_worker_f,
                              TB.number_ITR_p, TB.number_ITR_f
-                             ).filter(TB.contractor == cont, TB.date_created == date_today).order_by(TB.name_stage, TB.name_build, TB.name_level).all()
+                             ).filter(TB.contractor == cont, TB.date_created == date_today).order_by(TB.name_stage,
+                                                                                                     TB.name_build,
+                                                                                                     TB.name_level).all()
         return rows
 
     @staticmethod

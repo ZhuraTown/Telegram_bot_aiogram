@@ -55,3 +55,6 @@ import random
 #     print(user)
 #
 # CommandsDB.add_name_work('Обеспечение', 2)
+
+print(CommandsDB.get_all_users(user_password=True))
+# print(CommandsDB.get_all_users(gp='ЕСТ'))

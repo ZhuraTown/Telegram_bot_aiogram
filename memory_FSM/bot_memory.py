@@ -48,7 +48,23 @@ class StatesUsers(StatesGroup):
     write_name_work = State()  # Добавить наименование работ
     select_name_work = State()  # Выбрать наименование работ
 
+    # Добавление Подрядчика
+    edit_user = State()
 
+    edit_user_name = State()
+    edit_user_name_correct = State()
 
+    edit_user_pin = State()
+    edit_user_pin_correct = State()
 
+    write_user_name = State()
+    user_name_correct = State()
 
+    get_info_users = State()
+    del_user = State()
+
+    # Здания
+    builds = State()
+    build = State()
+
+    write_build = State()
