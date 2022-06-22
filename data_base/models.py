@@ -17,12 +17,13 @@ class User(base):
     )
     name = Column(String)
     password = Column(String, default='000000')
-    comment = Column(String, default=None)
     admin = Column(Boolean, default=False)
+    cont_name = Column(String, default=None, comment='Имя Ген подрядчика')
+    contractor = Column(Boolean, default=False, comment='Генподрядчик')
 
     def __repr__(self):
-        return '<User(user_id="{}", name="{}",password="{}", admin="{}", comment="{}")>'. \
-            format(self.user_id, self.name, self.password, self.admin, self.comment)
+        return '<User(user_id="{}", name="{}",password="{}", admin="{}", cont_name="{}", contractor="{}")>'. \
+            format(self.user_id, self.name, self.password, self.admin, self.cont_name, self.contractor)
 
 
 class TableWork(base):
@@ -88,7 +89,9 @@ class TableNameBuild(base):
                       primary_key=True,
                       autoincrement=True
                       )
+    name_cont = Column(String, comment='Привязанность к Ген подрядчику')
     name_build = Column(String, comment='Наименование здания')
+
 
     def __repr__(self):
         return "<builds_work(build_id='{}', name_build='{}')".format(self.build_id, self.name_build)

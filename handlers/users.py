@@ -1,4 +1,5 @@
 import datetime
+import random
 
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -29,22 +30,343 @@ def except_raise(func):
                                                      step_menu=['AUTH_USER']),
                            state=[AuthorizationUser.correct_password_user])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-                                                     step_menu=['WRITE_FORM', "SEE_FORM"]),
-                           state=[StatesUsers.create_new_form, StatesUsers.get_forms])
+                                                     step_menu=['WRITE_FORM', "SEE_FORM", 'A_P_USERS', "BUILDS"]),
+                           state=[StatesUsers.create_new_form, StatesUsers.get_forms,
+                                  StatesUsers.get_info_users, StatesUsers.builds])
 async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     async with state.proxy() as data:
-        await call.message.edit_text(f'Добро пожаловать в панель управления подрядчика\n'
-                                     f'Вы авторизовались как {"<b>"}{data["user_name"]}{"</b>"}',
-                                     parse_mode=ParseMode.HTML, reply_markup=KBLines.get_start_panel_btn())
+        if data['is_GP']:
+            await call.message.edit_text(f'Добро пожаловать в панель управления ГП\n'
+                                         f'Вы авторизовались как {"<b>"}{data["user_name"]}{"</b>"}',
+                                         parse_mode=ParseMode.HTML, reply_markup=KBLines.get_start_panel_gp())
+        else:
+            await call.message.edit_text(f'Добро пожаловать в панель управления подрядчика\n'
+                                         f'Вы авторизовались как {"<b>"}{data["user_name"]}{"</b>"}',
+                                         parse_mode=ParseMode.HTML, reply_markup=KBLines.get_start_panel_btn())
         await StatesUsers.start_user_panel.set()
 
+
+###########################
+#       Подрядчики
+###########################
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Подрядчики'],
+                                                     step_menu=['USER_MAIN_PAGE']),
+                           state=[StatesUsers.start_user_panel])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+                                                     step_menu=['DEL_USER']),
+                           state=[StatesUsers.del_user])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+                                                     step_menu=['CHANGE_USER', "NAME_USER"]),
+                           state=[StatesUsers.edit_user, StatesUsers.user_name_correct])
+async def get_information_companies(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        await bot.answer_callback_query(call.id)
+        companies = CommandsDB.get_all_users(gp=data['user_name'])
+        await call.message.edit_text(f'Панель управления подрядчиками',
+                                     reply_markup=KBLines.get_names_users_one_msg('A_P_USERS', companies))
+        await StatesUsers.get_info_users.set()
+
+
+@dp.callback_query_handler(btn_names_msg.filter(name_btn=['Удалить'],
+                                                step_menu=['A_P_USERS']),
+                           state=[StatesUsers.get_info_users])
+async def delete_user(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    await bot.answer_callback_query(call.id)
+    async with state.proxy() as data:
+        name_user = callback_data['name']
+        data['user_del'] = name_user
+        await StatesUsers.del_user.set()
+        await call.message.edit_text(f'Удалить подрядчика: {"<b>"}{name_user}{"</b>"}?',
+                                     parse_mode="HTML", reply_markup=KBLines.btn_next_or_back('DEL_USER'))
+
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
+                                                     step_menu=['DEL_USER']),
+                           state=[StatesUsers.del_user])
+async def accept_delete_user(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        name_user = data['user_del']
+        if CommandsDB.delete_user_with_name(name_user):
+            await bot.answer_callback_query(call.id,
+                                            text=f'Подрядчик: {name_user}\n'
+                                                 f'Успешно удален!', show_alert=True)
+            del data['user_del']
+        await StatesUsers.get_info_users.set()
+        companies = CommandsDB.get_all_users(gp=data['user_name'])
+        await call.message.edit_text(f'Панель управления подрядчиками',
+                                     reply_markup=KBLines.get_names_users_one_msg('A_P_USERS', companies))
+
+
+@dp.callback_query_handler(btn_names_msg.filter(name_btn=['Изменить'],
+                                                step_menu=['A_P_USERS']),
+                           state=[StatesUsers.get_info_users])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+                                                     step_menu=['SAVE_NEW_NAME', "SAVE_NEW_PIN"]),
+                           state=[StatesUsers.edit_user_name_correct,
+                                  StatesUsers.edit_user_pin_correct])
+async def change_user(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    if callback_data['name_btn'] == 'Назад':
+        await bot.answer_callback_query(call.id)
+        async with state.proxy() as data:
+            await StatesUsers.edit_user.set()
+            await call.message.edit_text(f'Выбран подрядчик: {"<b>"}{data["edit_user"]}{"</b>"}\n'
+                                         f'Выберите поле для изменения.',
+                                         parse_mode="HTML", reply_markup=KBLines.btn_change_user('CHANGE_USER'))
+    else:
+        await bot.answer_callback_query(call.id)
+        async with state.proxy() as data:
+            name_user = CommandsDB.get_user_with_id(callback_data['name'])[0]
+            data['edit_user'] = name_user
+            await StatesUsers.edit_user.set()
+            await call.message.edit_text(f'Выбран подрядчик: {"<b>"}{data["edit_user"]}{"</b>"}\n'
+                                         f'Выберите поле для изменения.',
+                                         parse_mode="HTML", reply_markup=KBLines.btn_change_user('CHANGE_USER'))
+
+
+######################################
+#  ИЗМЕНИТЬ НАИМЕНОВАНИЕ ПОДРЯДЧИКА
+#####################################
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Наименование'],
+                                                     step_menu=['CHANGE_USER']),
+                           state=[StatesUsers.edit_user])
+async def change_user_name(call: CallbackQuery, state: FSMContext):
+    await bot.answer_callback_query(call.id)
+    async with state.proxy() as data:
+        await StatesUsers.edit_user_name.set()
+        await call.message.edit_text(f'Текущее наименование: {"<b>"}{data["edit_user"]}{"</b>"}\n'
+                                     f'Введите новое наименование до 18 символов',
+                                     parse_mode="HTML", reply_markup=None)
+
+
+async def write_user_name(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        names_user = CommandsDB.get_all_user_with_gp(data['user_name'])
+        if message.text not in names_user:
+            if len(message.text) < 19:
+                data['new_name'] = message.text
+                await message.answer(f'Новое наименование: {message.text}\n'
+                                     f'Сохранить?', reply_markup=KBLines.btn_next_or_back('SAVE_NEW_NAME'))
+                await StatesUsers.edit_user_name_correct.set()
+            else:
+                await message.answer(f'Введенная строка: {message.text}\n'
+                                     f'Содержит {len(message.text)}. Необходимо ввести до 18 символов!')
+        else:
+            await message.answer(f'Подрядчик с именем({"<b>"}{message.text}{"</b>"}) уже есть в системе!\n'
+                                 f'Введите другое имя, которого нету в системе.', parse_mode='HTML')
+
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
+                                                     step_menu=['SAVE_NEW_NAME']),
+                           state=[StatesUsers.edit_user_name_correct])
+async def save_new_name_user(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        if CommandsDB.update_name_user_with_gp_with_name(data['edit_user'], data['new_name'], data['user_name']):
+            await bot.answer_callback_query(call.id, text=f'Наименование: {data["new_name"]}\n'
+                                                          f'Успешно сохранено!', show_alert=True)
+            data['edit_user'] = data["new_name"]
+            await StatesUsers.edit_user.set()
+            await call.message.edit_text(f'Выбран подрядчик: {"<b>"}{data["new_name"]}{"</b>"}\n'
+                                         f'Выберите поле для изменения.',
+                                         parse_mode="HTML", reply_markup=KBLines.btn_change_user('CHANGE_USER'))
+
+
+#########################
+#    ИЗМЕНИТЬ ПАРОЛЬ
+#########################
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['PIN_CODE'],
+                                                     step_menu=['CHANGE_USER']),
+                           state=[StatesUsers.edit_user])
+async def change_user_pin(call: CallbackQuery, state: FSMContext):
+    await bot.answer_callback_query(call.id)
+    async with state.proxy() as data:
+        data['edit_pin'] = CommandsDB.get_password_user_with_name_with_gp(data['edit_user'], data['user_name'])
+        await StatesUsers.edit_user_pin.set()
+        await call.message.edit_text(f'Текущий PIN_CODE: {"<b>"}{data["edit_pin"]}{"</b>"}\n'
+                                     f'Введите новый PIN_CODE.\n'
+                                     f'Требования: только цифры от 4 до 6 символов, без пробелов.',
+                                     parse_mode="HTML", reply_markup=None)
+
+
+async def write_user_pin(message: types.Message, state: FSMContext):
+    if message.text.isdigit():
+        if 4 <= len(message.text) <= 6:
+            if message.text not in CommandsDB.get_all_users(user_password=True):
+                async with state.proxy() as data:
+                    data['new_pin'] = message.text
+                    await message.answer(f'Новый PIN_CODE: {"<b>"}{message.text}{"</b>"}\n'
+                                         f'Сохранить?', reply_markup=KBLines.btn_next_or_back('SAVE_NEW_PIN'),
+                                         parse_mode="HTML")
+                    await StatesUsers.edit_user_pin_correct.set()
+            else:
+                await message.answer(f'Введенный PIN_CODE: {message.text}\n'
+                                     f'Уже есть в системе. Введите другой PIN_CODE!')
+        else:
+            await message.answer(f'Введенная строка: {message.text}\n'
+                                 f'PIN_CODE не подходит по длине!')
+    else:
+        await message.answer(f'Введенная строка: {message.text}\n'
+                             f'PIN_CODE должен содержать только цифры!')
+
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
+                                                     step_menu=['SAVE_NEW_PIN']),
+                           state=[StatesUsers.edit_user_pin_correct])
+async def save_new_pin_user(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        if CommandsDB.update_pincode_user_with_name(data['edit_user'], data['new_pin']):
+            await bot.answer_callback_query(call.id, text=f'PIN_CODE: {data["new_pin"]}\n'
+                                                          f'Успешно сохранен!', show_alert=True)
+            await StatesUsers.edit_user.set()
+            await call.message.edit_text(f'Выбранный Подрядчик: {"<b>"}{data["edit_user"]}{"</b>"}\n'
+                                         f'Выберите поле для изменения.',
+                                         parse_mode="HTML", reply_markup=KBLines.btn_change_user('CHANGE_USER'))
+
+
+###############################
+# Создание нового пользователя
+###############################
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить'],
+                                                     step_menu=['A_P_USERS']),
+                           state=[StatesUsers.get_info_users])
+async def create_new_user(call: CallbackQuery):
+    await bot.answer_callback_query(call.id, cache_time=5)
+    await call.message.edit_text(f'Добавление нового подрядчика\n'
+                                 f'Кнопка Назад появится после ввода любого текста', reply_markup=None)
+    await StatesUsers.write_user_name.set()
+
+
+async def write_name_user(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        names_user = CommandsDB.get_all_user_with_gp(data['user_name'])
+        if message.text not in names_user:
+            if len(message.text) < 19:
+                async with state.proxy() as data:
+                    data['new_name_user'] = message.text
+                await message.answer(f'Имя Ген Подрядчика: {"<b>"}{message.text}{"</b>"}\n'
+                                     f'Сохранить?', parse_mode='HTML',
+                                     reply_markup=KBLines.btn_next_or_back('NAME_USER'))
+                await StatesUsers.user_name_correct.set()
+            else:
+                await message.answer(f'Длина введенного имени({"<b>"}{message.text}{"</b>"})\n'
+                                     f'{len(message.text)}. Введите не более 18 символов', parse_mode="HTML")
+        else:
+            await message.answer(f'Подрядчик с именем({"<b>"}{message.text}{"</b>"}) уже есть в системе!\n'
+                                 f'Введите другое имя, которого нету в системе.', parse_mode='HTML')
+
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
+                                                     step_menu=['NAME_USER']),
+                           state=[StatesUsers.user_name_correct])
+async def save_new_user(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        pin_codes_db = CommandsDB.get_all_users(user_password=True)
+        pin_code_user = random.randint(1000, 9999)
+        while pin_code_user in pin_codes_db:
+            pin_code_user = random.randint(1000, 9999)
+        # Создаём пользователя
+        if CommandsDB.add_user_with_gp(data['new_name_user'], pin_code_user, data['user_name']):
+            await bot.answer_callback_query(call.id,
+                                            text=f'Подрядчик:{data["new_name_user"]}\n'
+                                                 f'Успешно добавлен в систему!', show_alert=True)
+        else:
+            await bot.answer_callback_query(call.id,
+                                            text=f'Не удалось добавить подрядчика: {data["new_name_user"]}'
+                                                 f'в систему!', show_alert=True)
+        await call.message.edit_text(f'Добро пожаловать в панель управления ГП\n'
+                                     f'Вы авторизовались как {"<b>"}{data["user_name"]}{"</b>"}',
+                                     parse_mode=ParseMode.HTML, reply_markup=KBLines.get_start_panel_gp())
+        await StatesUsers.start_user_panel.set()
+
+
+######################
+#       ЗДАНИЯ
+######################
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Здания'],
+                                                     step_menu=['USER_MAIN_PAGE']),
+                           state=[StatesUsers.start_user_panel])
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
+                                                     step_menu=['BUILD', "S_BUILD"]),
+                           state=[StatesUsers.build, StatesUsers.write_build])
+async def get_builds(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        await bot.answer_callback_query(call.id, cache_time=5)
+        await StatesUsers.builds.set()
+        builds = CommandsDB.get_all_builds_with_gp(data['user_name'])
+        await call.message.edit_text('Для удаления здания, нажмите на его наименование',
+                                     reply_markup=KBLines.get_all_builds('BUILDS', builds))
+
+
+@dp.callback_query_handler(btn_names_msg.filter(name_btn=['Здание'],
+                                                step_menu=['BUILDS']),
+                           state=[StatesUsers.builds])
+async def menu_build(call: CallbackQuery, callback_data: dict, state: FSMContext):
+    async with state.proxy() as data:
+        await bot.answer_callback_query(call.id, cache_time=2)
+        id_build = callback_data.get('name')
+        name_build = CommandsDB.get_name_build_with_id(id_build)
+        await call.message.edit_text(f'{name_build}', reply_markup=KBLines.btn_del_or_back('BUILD'))
+        await StatesUsers.build.set()
+        data['здание'] = name_build
+        data['здание_id'] = id_build
+
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Удалить'],
+                                                     step_menu=['BUILD']),
+                           state=[StatesUsers.build])
+async def del_build(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        name_build = data['здание']
+        if CommandsDB.del_name_build(name_build):
+            await bot.answer_callback_query(call.id,
+                                            text=f'Здание : {name_build},\n'
+                                                 f'Успешно удалено.', show_alert=True)
+        await StatesUsers.builds.set()
+        await call.message.edit_text('Для удаления здания, нажмите на его наименование и следуйте инструкции',
+                                     reply_markup=KBLines.get_all_builds('BUILDS', CommandsDB.get_all_names_builds()))
+
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить'],
+                                                     step_menu=['BUILDS']),
+                           state=[StatesUsers.builds])
+async def add_name_build(call: CallbackQuery):
+    await call.message.edit_text('Введите наименование здания. Кнопка Назад появится после ввода любого текста',
+                                 reply_markup=None)
+    await StatesUsers.write_build.set()
+
+
+async def write_name_build(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['name_build'] = message.text
+    await message.answer(f'Наименование здания: {"<b>"}{data["name_build"]}{"</b>"}\n'
+                         f'Добавить?',
+                         reply_markup=KBLines.save_name('S_BUILD'), parse_mode='HTML')
+
+
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить'],
+                                                     step_menu=['S_BUILD']),
+                           state=[StatesUsers.write_build])
+async def add_name_build_in_db(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_reply_markup(reply_markup=None)
+    async with state.proxy() as data:
+        name_build = data['name_build']
+        if CommandsDB.add_name_build(name_build, data['user_name']):
+            await bot.answer_callback_query(call.id, text=f'Здание: {name_build}\n'
+                                                          f'Успешно добавлено ', show_alert=True)
+        else:
+            await bot.answer_callback_query(call.id, text=f'Здание: {name_build}\n'
+                                                          f'Уже есть в базе', show_alert=True)
+        builds = CommandsDB.get_all_builds_with_gp(data['user_name'])
+        await call.message.answer('Для удаления здания, нажмите на его наименование',
+                                  reply_markup=KBLines.get_all_builds('BUILDS', builds))
+        await StatesUsers.builds.set()
 
 ##########################
 #     ПОСМОТРЕТЬ ФОРМЫ
 ##########################
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Посмотреть'],
-                                                     step_menu=["Step_MAIN"]),
+                                                     step_menu=["USER_MAIN_PAGE"]),
                            state=[StatesUsers.start_user_panel])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
                                                      step_menu=["SEL_FORM", "EDIT_FORM"]),
@@ -100,7 +422,7 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext, callback_data: 
 #     СОЗДАТЬ ФОРМУ
 ##########################
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Создать форму', 'Назад'],
-                                                     step_menu=["Step_MAIN", 'ADD_NAME_WORK', "NAMES"]),
+                                                     step_menu=["USER_MAIN_PAGE", 'ADD_NAME_WORK', "NAMES"]),
                            state=[StatesUsers.start_user_panel, StatesUsers.write_name_work,
                                   StatesUsers.select_name_work])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
@@ -210,4 +532,8 @@ async def create_form_with_name(call: CallbackQuery, state: FSMContext):
 
 def register_handlers_users(dp: Dispatcher):
     dp.register_message_handler(write_name_work, state=StatesUsers.write_name_work)
+    dp.register_message_handler(write_user_name, state=StatesUsers.edit_user_name)
+    dp.register_message_handler(write_user_pin, state=StatesUsers.edit_user_pin)
+    dp.register_message_handler(write_name_user, state=StatesUsers.write_user_name)
+    dp.register_message_handler(write_name_build, state=StatesUsers.write_build)
 
