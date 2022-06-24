@@ -4,6 +4,7 @@ import random
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, ParseMode
+from aiogram.utils.markdown import hlink
 
 from create_bot import dp, bot
 from data_base.db_commands import CommandsDB
@@ -62,7 +63,7 @@ async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
 async def get_information_companies(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         await bot.answer_callback_query(call.id)
-        companies = CommandsDB.get_all_users(gp=data['user_name'])
+        companies = CommandsDB.get_all_users(gp=data['user_name'], gp_id=data['id_user'])
         await call.message.edit_text(f'Панель управления подрядчиками',
                                      reply_markup=KBLines.get_names_users_one_msg('A_P_USERS', companies))
         await StatesUsers.get_info_users.set()
@@ -74,8 +75,9 @@ async def get_information_companies(call: CallbackQuery, state: FSMContext):
 async def delete_user(call: CallbackQuery, callback_data: dict, state: FSMContext):
     await bot.answer_callback_query(call.id)
     async with state.proxy() as data:
-        name_user = callback_data['name']
-        data['user_del'] = name_user
+        name_user = CommandsDB.get_user_with_id(callback_data['name'])[0]
+        data['user_del_id'] = callback_data['name']
+        data['user_del_name'] = name_user
         await StatesUsers.del_user.set()
         await call.message.edit_text(f'Удалить подрядчика: {"<b>"}{name_user}{"</b>"}?',
                                      parse_mode="HTML", reply_markup=KBLines.btn_next_or_back('DEL_USER'))
@@ -86,14 +88,15 @@ async def delete_user(call: CallbackQuery, callback_data: dict, state: FSMContex
                            state=[StatesUsers.del_user])
 async def accept_delete_user(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        name_user = data['user_del']
-        if CommandsDB.delete_user_with_name(name_user):
+        id_user = data['user_del_id']
+        name_user = data['user_del_name']
+        if CommandsDB.delete_user_with_id(id_user):
             await bot.answer_callback_query(call.id,
                                             text=f'Подрядчик: {name_user}\n'
                                                  f'Успешно удален!', show_alert=True)
             del data['user_del']
         await StatesUsers.get_info_users.set()
-        companies = CommandsDB.get_all_users(gp=data['user_name'])
+        companies = CommandsDB.get_all_users(gp=data['user_name'], gp_id=data['id_user'])
         await call.message.edit_text(f'Панель управления подрядчиками',
                                      reply_markup=KBLines.get_names_users_one_msg('A_P_USERS', companies))
 
@@ -116,7 +119,9 @@ async def change_user(call: CallbackQuery, callback_data: dict, state: FSMContex
     else:
         await bot.answer_callback_query(call.id)
         async with state.proxy() as data:
+
             name_user = CommandsDB.get_user_with_id(callback_data['name'])[0]
+            data['edit_user_id'] = callback_data['name']
             data['edit_user'] = name_user
             await StatesUsers.edit_user.set()
             await call.message.edit_text(f'Выбран подрядчик: {"<b>"}{data["edit_user"]}{"</b>"}\n'
@@ -161,7 +166,7 @@ async def write_user_name(message: types.Message, state: FSMContext):
                            state=[StatesUsers.edit_user_name_correct])
 async def save_new_name_user(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        if CommandsDB.update_name_user_with_gp_with_name(data['edit_user'], data['new_name'], data['user_name']):
+        if CommandsDB.update_name_user_with_gp_with_name(data['edit_user_id'], data['new_name'], data['user_name']):
             await bot.answer_callback_query(call.id, text=f'Наименование: {data["new_name"]}\n'
                                                           f'Успешно сохранено!', show_alert=True)
             data['edit_user'] = data["new_name"]
@@ -214,7 +219,7 @@ async def write_user_pin(message: types.Message, state: FSMContext):
                            state=[StatesUsers.edit_user_pin_correct])
 async def save_new_pin_user(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        if CommandsDB.update_pincode_user_with_name(data['edit_user'], data['new_pin']):
+        if CommandsDB.update_pincode_user_with_name(data['edit_user_id'], data['new_pin']):
             await bot.answer_callback_query(call.id, text=f'PIN_CODE: {data["new_pin"]}\n'
                                                           f'Успешно сохранен!', show_alert=True)
             await StatesUsers.edit_user.set()
@@ -266,7 +271,7 @@ async def save_new_user(call: CallbackQuery, state: FSMContext):
         while pin_code_user in pin_codes_db:
             pin_code_user = random.randint(1000, 9999)
         # Создаём пользователя
-        if CommandsDB.add_user_with_gp(data['new_name_user'], pin_code_user, data['user_name']):
+        if CommandsDB.add_user_with_gp(data['new_name_user'], pin_code_user, data['user_name'], data['id_user']):
             await bot.answer_callback_query(call.id,
                                             text=f'Подрядчик:{data["new_name_user"]}\n'
                                                  f'Успешно добавлен в систему!', show_alert=True)
@@ -351,7 +356,7 @@ async def add_name_build_in_db(call: CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup(reply_markup=None)
     async with state.proxy() as data:
         name_build = data['name_build']
-        if CommandsDB.add_name_build(name_build, data['user_name']):
+        if CommandsDB.add_name_build(name_build, data['user_name'], data['id_user']):
             await bot.answer_callback_query(call.id, text=f'Здание: {name_build}\n'
                                                           f'Успешно добавлено ', show_alert=True)
         else:
@@ -395,20 +400,24 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
                                                      step_menu=["SEL_FORM"]),
                            state=[StatesUsers.get_form_with_name])
-async def get_forms_user(call: CallbackQuery, state: FSMContext, callback_data: dict):
+async def change_form_user(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await call.answer(cache_time=3)
     await StatesUsers.edit_form.set()
     try:
         async with state.proxy() as data:
+            contractor = data.get('user_name') if data.get("is_GP") else data.get('GP')
+            id_contractor = data.get('id_user') if data.get("is_GP") else data.get('id_GP')
             company = data['user_name']
+            company_id = data['id_user']
+            is_gp = data['is_GP']
             value_from_callback_data = callback_data.get('name').split(',')
             name_work = CommandsDB.get_name_work_for_id(value_from_callback_data[0]).work_name
-            contractor = CommandsDB.get_user_with_id(value_from_callback_data[1]).name
-            ids_form = CommandsDB.get_ids_str_form_with_work_user_today(user_name=company,
-                                                                        name_work=name_work, contractor=contractor)
-            url = GeneratorUrlFlask.get_url_for_edit_form(company=company, work=name_work,
-                                                          ids=ids_form, contractor=contractor)
-            print(url)
+            ids_form = CommandsDB.get_ids_str_form_with_work_user_today(user_name=company, name_work=name_work,
+                                                                        contractor=contractor)
+
+            url = GeneratorUrlFlask.get_url_for_edit_form(company=company, work=name_work, ids=ids_form,
+                                                          contractor=contractor, comp_id=company_id, gp_id=id_contractor,
+                                                          is_gp=is_gp)
             await call.message.edit_text(f'[Ссылка на изменение формы]({url})',
                                          reply_markup=KBLines.btn_back('EDIT_FORM'), parse_mode="MarkdownV2")
     except Exception as e:
@@ -522,12 +531,19 @@ async def del_name_work(call: CallbackQuery, state: FSMContext):
                            state=[StatesUsers.create_form_sel_name_work])
 async def create_form_with_name(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
+        contractor = data.get('user_name') if data.get("is_GP") else data.get('GP')
         name_work = data.get('name_work')
         company = data.get('user_name')
+        id_contractor = data.get('id_user') if data.get("is_GP") else data.get('id_GP')
+        is_gp = data.get('is_GP')
+        comp_id = data.get('id_user')
         await StatesUsers.get_url_form.set()
-        url_create_form = GeneratorUrlFlask.get_url_for_create_form(company=company, work=name_work)
-        await call.message.edit_text(f"Ссылка на форму:\n"
-                                     f"{url_create_form}", reply_markup=KBLines.btn_back('NEW_FORM'))
+        url_create_form = GeneratorUrlFlask.get_url_for_create_form(company=company, work=name_work,
+                                                                    gp_id=id_contractor, contractor=contractor,
+                                                                    is_gp=is_gp, comp_id=comp_id)
+        await call.message.edit_text(f"{hlink('Ссылка на форму', url_create_form)}",
+                                     reply_markup=KBLines.btn_back('NEW_FORM'),
+                                     parse_mode=ParseMode.HTML)
 
 
 def register_handlers_users(dp: Dispatcher):

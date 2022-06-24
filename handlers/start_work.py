@@ -58,8 +58,9 @@ async def authorization_step(message: types.Message, state: FSMContext):
                 #
                 data['user_name'] = pin_cods[msg][0]
                 data['id_user'] = pin_cods[msg][2]
-                data['is_GP'] = pin_cods[msg][4]
                 data['GP'] = pin_cods[msg][3]
+                data['is_GP'] = pin_cods[msg][4]
+                data['id_GP'] = pin_cods[msg][5]
                 if data['is_GP']:
                     await message.answer(
                         f'Вы авторизовались как ГП: {"<b>"}{pin_cods[msg][0]}{"</b>"}\n'

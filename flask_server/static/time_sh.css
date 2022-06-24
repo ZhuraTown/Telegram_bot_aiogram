@@ -6,7 +6,7 @@
     align-items: flex-start;
     isolation: isolate;
     border-radius: 16px;
-    padding: 24px 18px 28px;
+    padding: 24px 18px 3px;
     max-width: 500px;
 }
 
@@ -45,6 +45,16 @@ textarea {
     width: auto;
     border: none;
     min-height: 23px;
+}
+
+#contractor{
+    font-family: 'Roboto', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 19px;
+    padding-top: 10px;
+
 }
 
 #name_work {
@@ -111,19 +121,19 @@ textarea {
     width: 100%;
 }
 
-#contractor {
-    background: #FFFFFF;
-    color: #797979;
-    padding: 16px;
-    border-radius: 12px;
-    font-family: 'Roboto', sans-serif;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 18px;
-    line-height: 20px;
-    max-width: 450px;
-    width: 100%;
-}
+/*#contractor {*/
+/*    background: #FFFFFF;*/
+/*    color: #797979;*/
+/*    padding: 16px;*/
+/*    border-radius: 12px;*/
+/*    font-family: 'Roboto', sans-serif;*/
+/*    font-style: normal;*/
+/*    font-weight: 400;*/
+/*    font-size: 18px;*/
+/*    line-height: 20px;*/
+/*    max-width: 450px;*/
+/*    width: 100%;*/
+/*}*/
 
 .workers {
     margin-top: 16px;

@@ -56,5 +56,13 @@ import random
 #
 # CommandsDB.add_name_work('Обеспечение', 2)
 
-print(CommandsDB.get_all_users(user_password=True))
+# print(CommandsDB.get_all_users(user_password=True))
 # print(CommandsDB.get_all_users(gp='ЕСТ'))
+#
+# for lin in CommandsDB.get_all_names_builds():
+#     print(CommandsDB.del_name_build(lin[1]))
+
+# print(CommandsDB.get_all_users(gp='ЛИИС', gp_id=data['id_user']))
+print(CommandsDB.get_all_users(gp="ЛИИС", gp_id=2))
+print(CommandsDB.get_all_users(gp="ЕСТ", gp_id=3))
+print(CommandsDB.get_names_all_users())

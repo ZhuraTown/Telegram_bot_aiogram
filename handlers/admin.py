@@ -217,6 +217,7 @@ async def change_user(call: CallbackQuery, callback_data: dict, state: FSMContex
         async with state.proxy() as data:
             name_user = CommandsDB.get_user_with_id(callback_data['name'])[0]
             data['edit_user'] = name_user
+            data['edit_user_id'] = callback_data['name']
             await StatesAdminUser.edit_user.set()
             await call.message.edit_text(f'Выбран Ген Подрядчик: {"<b>"}{data["edit_user"]}{"</b>"}\n'
                                          f'Выберите поле для изменения.',
@@ -307,7 +308,8 @@ async def write_user_pin(message: types.Message, state: FSMContext):
                            state=[StatesAdminUser.edit_user_pin_correct])
 async def save_new_pin_user(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        if CommandsDB.update_pincode_user_with_name(data['edit_user'], data['new_pin']):
+        # if CommandsDB.update_pincode_user_with_name(data['edit_user'], data['new_pin']):
+        if CommandsDB.update_pincode_user_with_name(data['edit_user_id'], data['new_pin']):
             await bot.answer_callback_query(call.id, text=f'PIN_CODE: {data["new_pin"]}\n'
                                                           f'Успешно сохранен!', show_alert=True)
             await StatesAdminUser.edit_user.set()
