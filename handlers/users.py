@@ -12,6 +12,7 @@ from keyboards.inlines_kb.callback_datas import menu_callback_user, btn_names_ms
 from keyboards.inlines_kb.kb_inlines import KBLines
 from memory_FSM.bot_memory import StatesUsers, AuthorizationUser
 from flask_server.generator_url import GeneratorUrlFlask
+from excel_creator.excel_writer import ExcelWriter
 
 
 def except_raise(func):
@@ -31,9 +32,10 @@ def except_raise(func):
                                                      step_menu=['AUTH_USER']),
                            state=[AuthorizationUser.correct_password_user])
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-                                                     step_menu=['WRITE_FORM', "SEE_FORM", 'A_P_USERS', "BUILDS"]),
+                                                     step_menu=['WRITE_FORM', "SEE_FORM", 'A_P_USERS', "BUILDS",
+                                                                "TABLE_TIME"]),
                            state=[StatesUsers.create_new_form, StatesUsers.get_forms,
-                                  StatesUsers.get_info_users, StatesUsers.builds])
+                                  StatesUsers.get_info_users, StatesUsers.builds, StatesUsers.get_table])
 async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=3)
     async with state.proxy() as data:
@@ -43,9 +45,48 @@ async def cmd_users_panel(call: CallbackQuery, state: FSMContext):
                                          parse_mode=ParseMode.HTML, reply_markup=KBLines.get_start_panel_gp())
         else:
             await call.message.edit_text(f'Добро пожаловать в панель управления подрядчика\n'
+                                         f'Ген подрядчик: {"<b>"}{data["GP"]}{"</b>"}\n'
                                          f'Вы авторизовались как {"<b>"}{data["user_name"]}{"</b>"}',
                                          parse_mode=ParseMode.HTML, reply_markup=KBLines.get_start_panel_btn())
         await StatesUsers.start_user_panel.set()
+
+
+#############################
+#    ВЫГРУЗИТЬ ТАБЛИЦЫ
+#############################
+@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Таблица'],
+                                                     step_menu=['USER_MAIN_PAGE']),
+                           state=[StatesUsers.start_user_panel])
+async def get_table_time_sheet(call: CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        date_today = datetime.datetime.today().date()
+        await StatesUsers.get_table.set()
+        await call.message.edit_text(f'Таблица подрядчиков за:{"<b>"}{date_today}{"</b>"}',
+                                     parse_mode='HTML', reply_markup=None)
+        gp_name = data['user_name']
+        gp_id = data['id_user']
+
+        tb_sheet = ExcelWriter('Отчет_по_табелю')
+        path_to_file = tb_sheet.get_path_to_file()
+
+        stages = CommandsDB.get_stages_today_from_form(gp_id)
+        comps_and_work = CommandsDB.get_names_work_companies_from_form(gp_id)
+        tb_sheet.create_table_header(gp_name, stages, len(comps_and_work))
+        # Заполнение Этап, Здание, Этаж, Ген подрядчик
+        lns_from_form_with_contactor = CommandsDB.get_all_str_from_form_with_cont(gp_id)
+        tb_sheet.write_companies_to_tb(comps_and_work)
+        tb_sheet.write_title_tb_tm_sh()
+        tb_sheet.write_title_companies_tb(comps_and_work)
+        tb_sheet.write_builds_st_lv_tb(lns_from_form_with_contactor)
+        tb_sheet.write_nums_workers(lns_from_form_with_contactor)
+        tb_sheet.write_results_formulas_bottom()
+        tb_sheet.write_results_formulas_right()
+        tb_sheet.write_total_nums_works_to_tb(comps_and_work)
+        tb_sheet.close()
+        file = open(path_to_file, 'rb')
+        await bot.send_document(call.message.chat.id, file)
+        await bot.send_message(call.message.chat.id, 'Нажмите кнопку Назад, чтобы вернутся в меню',
+                               reply_markup=KBLines.btn_back('TABLE_TIME'))
 
 
 ###########################
@@ -381,13 +422,15 @@ async def get_forms_user(call: CallbackQuery, state: FSMContext):
     await StatesUsers.get_forms.set()
     async with state.proxy() as data:
         date = datetime.datetime.today().date()
-        names_forms = CommandsDB.get_name_forms_with_user_with_date(data['user_name'], date)
+        id_gp = data['id_user'] if data['is_GP'] else data['id_GP']
+        names_forms = CommandsDB.get_name_forms_with_user_with_date(data['user_name'], date, id_gp)
         names_work = CommandsDB.get_all_names_work_with_user_id(data['id_user'])
         data_works = []
         for name_work in names_work:
             for name_form in names_forms:
                 if name_form[0] == name_work[0]:
-                    contractor_id = CommandsDB.get_user_id_with_name(name_form[1]).user_id
+                    # contractor_id = CommandsDB.get_user_id_with_name(name_form[1], id_gp).user_id
+                    contractor_id = id_gp
                     data_works.append([name_work[0], name_work[1], name_form[1], contractor_id])
         await call.message.edit_text(f"Созданные формы за {'<b>'}{date}{'</b>'}",
                                      parse_mode=ParseMode.HTML,
@@ -476,7 +519,8 @@ async def add_name_work_in_db(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         name_work = data['name_work']
         id_user = data['id_user']
-        if CommandsDB.add_name_work(name_work, id_user):
+        is_gp = data['is_GP']
+        if CommandsDB.add_name_work(name_work, id_user, is_gp):
             await bot.answer_callback_query(call.id,
                                             text=f'Наименование работы: {name_work}\n'
                                                  f'Добавлено', show_alert=True)

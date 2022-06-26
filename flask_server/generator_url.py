@@ -26,8 +26,9 @@ class GeneratorUrlFlask:
         ids: ID Записей из БД для изменений, contractor: Имя ГП, id_user: ID пользователя,
         is_gp: ГП отправляет запрос, comp_id: ID компании
         """
-        company_list, work_list, contractor_list = company.split(), work.split(), contractor.split()
-        company, work, contractor = '%20'.join(company_list), '%20'.join(work_list), '%20'.join(contractor_list)
+        # company_list, work_list, contractor_list = company.split(), work.split(), contractor.split()
+        # company, work, contractor = '%20'.join(company_list), '%20'.join(work_list), '%20'.join(contractor_list)
+        company, work, contractor = company, work, contractor
         ids = ','.join([str(i) for i in ids])
         gp_id = str(gp_id)
         is_gp = str(int(is_gp))

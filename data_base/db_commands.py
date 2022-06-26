@@ -40,8 +40,9 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def get_user_id_with_name(name_user: str):
-        return session.query(User.user_id).filter(User.name == name_user).one()
+    def get_user_id_with_name(name_user: str, id_gp: int or str):
+        """ Получить ID пользователя по ему Имени """
+        return session.query(User.user_id).filter(User.name == name_user, User.cont_id == id_gp).one()
 
     @staticmethod
     def get_all_users(user_password=False,
@@ -52,9 +53,10 @@ class CommandsDB:
          gp - получить из БД массив подрядчиков только с ГП = gp"""
         if not user_password:
             if contractor:
-                rows = session.query(User.user_id, User.name, User.password, User.contractor, ).filter(User.contractor == True).all()
+                rows = session.query(User.user_id, User.name, User.password, User.contractor, ).filter(
+                    User.contractor == True).all()
             else:
-                rows = session.query(User.user_id, User.name, User.password).\
+                rows = session.query(User.user_id, User.name, User.password). \
                     filter(User.cont_name == gp, User.contractor == False, User.cont_id == gp_id). \
                     order_by(User.name).all()
             return rows
@@ -230,11 +232,11 @@ class CommandsDB:
     #      НАИМЕНОВАНИЯ РАБОТ
     ################################
     @staticmethod
-    def add_name_work(name, user) -> bool:
+    def add_name_work(name: str, user_id: str or int, is_gp: bool) -> bool:
         try:
             if session.query(TableNameWork.work_name).filter(TableNameWork.work_name == name,
-                                                             TableNameWork.user_id == user).count() == 0:
-                name_work = TableNameWork(work_name=name, user_id=user)
+                                                             TableNameWork.user_id == user_id).count() == 0:
+                name_work = TableNameWork(work_name=name, user_id=user_id)
                 session.add(name_work)
                 session.flush()
                 return True
@@ -283,7 +285,7 @@ class CommandsDB:
     def add_name_build(name: str, gp: str, id_gp: int) -> bool:
         """ Добавить здание в БД с ГП (gp) """
         try:
-            if session.query(TableNameBuild.name_build).\
+            if session.query(TableNameBuild.name_build). \
                     filter(TableNameBuild.name_build == name, TableNameBuild.name_cont == gp).count() == 0:
                 session.add(TableNameBuild(name_build=name, name_cont=gp, id_cont=id_gp))
                 session.flush()
@@ -318,16 +320,16 @@ class CommandsDB:
 
     @staticmethod
     def get_all_builds_with_gp(gp: str) -> list:
-        rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build, TableNameBuild.name_cont)\
-            .filter(TableNameBuild.name_cont == gp)\
+        rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build, TableNameBuild.name_cont) \
+            .filter(TableNameBuild.name_cont == gp) \
             .order_by(TableNameBuild.name_build).all()
         return rows
 
     @staticmethod
     def get_all_builds_with_id_gp(gp_id: str or int) -> list:
         """ Получение всех зданий, добавленных gp_id  """
-        rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build, TableNameBuild.name_cont)\
-            .filter(TableNameBuild.id_cont == gp_id)\
+        rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build, TableNameBuild.name_cont) \
+            .filter(TableNameBuild.id_cont == gp_id) \
             .order_by(TableNameBuild.name_build).all()
         return rows
 
@@ -343,7 +345,7 @@ class CommandsDB:
     def add_new_string_work(user_name: str, name_work: str, name_stage: int,
                             name_build: str, level: str, number_security: list,
                             number_duty: list, number_worker: list, number_itr: list,
-                            contractor: str, is_gp: bool):
+                            contractor: str, is_gp: bool, id_gp: int):
         try:
             date = datetime.today().date()
             tb = TableWork
@@ -357,7 +359,7 @@ class CommandsDB:
                                       number_duty_p=number_duty[0], number_duty_f=number_duty[1],
                                       number_worker_p=number_worker[0], number_worker_f=number_worker[1],
                                       number_ITR_p=number_itr[0], number_ITR_f=number_itr[1], date_created=date,
-                                      contractor=contractor, form_is_gp=is_gp
+                                      contractor=contractor, form_is_gp=is_gp, id_gp=id_gp
                                       ))
                 session.flush()
                 return True
@@ -407,11 +409,13 @@ class CommandsDB:
         return rows
 
     @staticmethod
-    def get_name_forms_with_user_with_date(user_name, date):
+    def get_name_forms_with_user_with_date(user_name: str, date: datetime.today().date(),
+                                           id_gp: int):
+        """ Получить наименования работ созданным пользователем """
         TB = TableWork
-        return [(name.name_work, name.contractor) for name in
-                session.query(TB.name_work, TB.contractor).
-                filter(TB.user_name == user_name, TB.date_created == date).distinct().all()]
+        return [(name.name_work, name.id_gp) for name in
+                session.query(TB.name_work, TB.contractor, TB.id_gp).
+                filter(TB.user_name == user_name, TB.date_created == date, TB.id_gp == id_gp).distinct().all()]
 
     @staticmethod
     def del_str_form_with_name_work_or_id_form(id_form: str or int = None, name_work: str = None):
@@ -449,18 +453,20 @@ class CommandsDB:
         return [i[0] for i in row]
 
     @staticmethod
-    def get_stages_today_from_form(cont: str) -> list:
-        """ Получить из БД Этапы работы с ген подрядчиком"""
+    def get_stages_today_from_form(cont: str or int) -> list:
+        """ Получить из БД Этапы работы с ген подрядчиком (по id)"""
         date_today = datetime.today().date()
         row = session.query(TableWork.name_stage).filter(TableWork.date_created == date_today,
-                                                         TableWork.contractor == cont).distinct().all()
+                                                         TableWork.id_gp == cont).distinct().all()
         return [i[0] for i in row]
 
     @staticmethod
-    def get_names_work_companies_from_form():
+    def get_names_work_companies_from_form(id_gp: int or str):
+        """ Получить наименование компании и работ из ДБ по id_GP """
         date_today = datetime.today().date()
-        row = session.query(TableWork.user_name, TableWork.name_work).filter(
-            TableWork.date_created == date_today).order_by(TableWork.user_name).distinct().all()
+        row = session.query(TableWork.user_name, TableWork.name_work, TableWork.form_is_gp).filter(
+            TableWork.date_created == date_today,
+            TableWork.id_gp == id_gp).order_by(TableWork.user_name).distinct().all()
         return row
 
     @staticmethod
@@ -477,17 +483,17 @@ class CommandsDB:
         return rows
 
     @staticmethod
-    def get_all_str_from_form_with_cont(cont: str) -> list:
+    def get_all_str_from_form_with_cont(gp_id: str or int) -> list:
         TB = TableWork
         date_today = datetime.today().date()
         rows = session.query(TB.name_stage, TB.name_build, TB.name_level, TB.contractor, TB.user_name, TB.name_work,
                              TB.number_security_p, TB.number_security_f,
                              TB.number_duty_p, TB.number_duty_f,
                              TB.number_worker_p, TB.number_worker_f,
-                             TB.number_ITR_p, TB.number_ITR_f
-                             ).filter(TB.contractor == cont, TB.date_created == date_today).order_by(TB.name_stage,
-                                                                                                     TB.name_build,
-                                                                                                     TB.name_level).all()
+                             TB.number_ITR_p, TB.number_ITR_f, TB.form_is_gp
+                             ).filter(TB.id_gp == gp_id, TB.date_created == date_today).order_by(TB.name_stage,
+                                                                                                 TB.name_build,
+                                                                                                 TB.name_level).all()
         return rows
 
     @staticmethod

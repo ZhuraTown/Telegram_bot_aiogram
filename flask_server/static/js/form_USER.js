@@ -97,23 +97,6 @@ async function getBuildsWithIdForm(id_select){
     }
     }
 
-// async function getContractors() {
-//         function addOption(key, value) {
-//         let newOption = new Option(value, key)
-//         let select = document.getElementById("contractor")
-//         select.append(newOption)
-//     }
-//         let response = await fetch(URL_WORK + "contactors",{
-//         method: "GET"
-//     } ).then(response => response.json())
-//     let contractors = document.querySelectorAll("#contractor")
-//         contractors.forEach(function(item, i, arr) {
-//             for(let key in response){
-//                 if (item.children[0].value !== response[key]) {
-//                     addOption(response[key], response[key], item)
-//                 }}})
-//     }
-
 
 async function getBuilds(){
         function addOption(key, value, element) {

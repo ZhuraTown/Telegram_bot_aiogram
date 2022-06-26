@@ -11,7 +11,6 @@ from keyboards.inlines_kb.callback_datas import menu_callback_user, btn_names_ms
 from keyboards.inlines_kb.kb_inlines import KBLines
 from memory_FSM.bot_memory import StatesAdminUser, AuthorizationUser
 
-from excel_creator.excel_writer import ExcelWriter
 
 
 ###############################
@@ -35,115 +34,37 @@ async def cmd_admin_panel(call: CallbackQuery, state: FSMContext):
 #############################
 #    ВЫГРУЗИТЬ ТАБЛИЦЫ
 #############################
-@dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выгрузить'],
-                                                     step_menu=['ADMIN_PANEL']),
-                           state=[StatesAdminUser.start_admin_panel])
-async def get_table_time_sheet(call: CallbackQuery, state: FSMContext, callback_data: dict):
-    date_today = datetime.datetime.today().date()
-    await StatesAdminUser.get_table.set()
-    await call.message.edit_text(f'Таблица подрядчиков за:{"<b>"}{date_today}{"</b>"}',
-                                 parse_mode='HTML', reply_markup=None)
-    table_tb_sheet = ExcelWriter('Отчет_по_табелю')
-    path_to_file = table_tb_sheet.get_path_to_file()
-    contractors = CommandsDB.get_contractors_today_from_form()
-    for contractor in contractors:
-        stages = CommandsDB.get_stages_today_from_form(contractor)
-        comps_and_work = CommandsDB.get_names_work_companies_from_form()
-        table_tb_sheet.create_table_header(contractor, stages, len(comps_and_work))
-        # Запрос Этап, Здание, Этаж, Ген подрядчик
-        lns_from_form_with_contactor = CommandsDB.get_all_str_from_form_with_cont(contractor)
-        table_tb_sheet.write_companies_to_tb(comps_and_work)
-        table_tb_sheet.write_title_tb_tm_sh()
-        table_tb_sheet.write_title_companies_tb(comps_and_work)
-        table_tb_sheet.write_builds_st_lv_tb(lns_from_form_with_contactor)
-        table_tb_sheet.write_nums_workers(lns_from_form_with_contactor)
-        table_tb_sheet.write_results_formulas_bottom()
-        table_tb_sheet.write_results_formulas_right()
-        table_tb_sheet.write_total_nums_works_to_tb(comps_and_work)
-    table_tb_sheet.close()
-    file = open(path_to_file, 'rb')
-    await bot.send_document(call.message.chat.id, file)
-    await bot.send_message(call.message.chat.id, 'Нажмите кнопку Назад, чтобы вернутся в меню',
-                           reply_markup=KBLines.btn_back('TABLE_TIME'))
-
-# ######################
-# #       ЗДАНИЯ
-# ######################
-# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Здания'],
+# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выгрузить'],
 #                                                      step_menu=['ADMIN_PANEL']),
 #                            state=[StatesAdminUser.start_admin_panel])
-# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Назад'],
-#                                                      step_menu=['BUILD', "S_BUILD"]),
-#                            state=[StatesAdminUser.build, StatesAdminUser.write_build])
-# async def get_builds(call: CallbackQuery):
-#     await bot.answer_callback_query(call.id, cache_time=5)
-#     await StatesAdminUser.builds.set()
-#     await call.message.edit_text('Для удаления здания, нажмите на его наименование',
-#                                  reply_markup=KBLines.get_all_builds('BUILDS', CommandsDB.get_all_names_builds()))
-#
-#
-# @dp.callback_query_handler(btn_names_msg.filter(name_btn=['Здание'],
-#                                                 step_menu=['BUILDS']),
-#                            state=[StatesAdminUser.builds])
-# async def menu_build(call: CallbackQuery, callback_data: dict, state: FSMContext):
-#     async with state.proxy() as data:
-#         await bot.answer_callback_query(call.id, cache_time=2)
-#         id_build = callback_data.get('name')
-#         name_build = CommandsDB.get_name_build_with_id(id_build)
-#         await call.message.edit_text(f'{name_build}', reply_markup=KBLines.btn_del_or_back('BUILD'))
-#         await StatesAdminUser.build.set()
-#         data['здание'] = name_build
-#         data['здание_id'] = id_build
-#
-#
-# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Удалить'],
-#                                                      step_menu=['BUILD']),
-#                            state=[StatesAdminUser.build])
-# async def del_build(call: CallbackQuery, state: FSMContext):
-#     async with state.proxy() as data:
-#         name_build = data['здание']
-#         if CommandsDB.del_name_build(name_build):
-#             await bot.answer_callback_query(call.id,
-#                                             text=f'Здание : {name_build},\n'
-#                                                  f'Успешно удалено.', show_alert=True)
-#         await StatesAdminUser.builds.set()
-#         await call.message.edit_text('Для удаления здания, нажмите на его наименование и следуйте инструкции',
-#                                      reply_markup=KBLines.get_all_builds('BUILDS', CommandsDB.get_all_names_builds()))
-#
-#
-# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить'],
-#                                                      step_menu=['BUILDS']),
-#                            state=[StatesAdminUser.builds])
-# async def add_name_build(call: CallbackQuery):
-#     await call.message.edit_text('Введите наименование здания. Кнопка Назад появится после ввода любого текста',
-#                                  reply_markup=None)
-#     await StatesAdminUser.write_build.set()
-#
-#
-# async def write_name_build(message: types.Message, state: FSMContext):
-#     async with state.proxy() as data:
-#         data['name_build'] = message.text
-#     await message.answer(f'Наименование здания: {"<b>"}{data["name_build"]}{"</b>"}\n'
-#                          f'Добавить?',
-#                          reply_markup=KBLines.save_name('S_BUILD'), parse_mode='HTML')
-#
-#
-# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить'],
-#                                                      step_menu=['S_BUILD']),
-#                            state=[StatesAdminUser.write_build])
-# async def add_name_build_in_db(call: CallbackQuery, state: FSMContext):
-#     await call.message.edit_reply_markup(reply_markup=None)
-#     async with state.proxy() as data:
-#         name_build = data['name_build']
-#         if CommandsDB.add_name_build(name_build):
-#             await bot.answer_callback_query(call.id, text=f'Здание: {name_build}\n'
-#                                                           f'Успешно добавлено ', show_alert=True)
-#         else:
-#             await bot.answer_callback_query(call.id, text=f'Здание: {name_build}\n'
-#                                                           f'Уже есть в базе', show_alert=True)
-#         await call.message.answer('Для удаления здания, нажмите на его наименование',
-#                                   reply_markup=KBLines.get_all_builds('BUILDS', CommandsDB.get_all_names_builds()))
-#         await StatesAdminUser.builds.set()
+# async def get_table_time_sheet(call: CallbackQuery, state: FSMContext, callback_data: dict):
+#     date_today = datetime.datetime.today().date()
+#     await StatesAdminUser.get_table.set()
+#     await call.message.edit_text(f'Таблица подрядчиков за:{"<b>"}{date_today}{"</b>"}',
+#                                  parse_mode='HTML', reply_markup=None)
+#     table_tb_sheet = ExcelWriter('Отчет_по_табелю')
+#     path_to_file = table_tb_sheet.get_path_to_file()
+#     contractors = CommandsDB.get_contractors_today_from_form()
+#     for contractor in contractors:
+#         stages = CommandsDB.get_stages_today_from_form(contractor)
+#         comps_and_work = CommandsDB.get_names_work_companies_from_form()
+#         table_tb_sheet.create_table_header(contractor, stages, len(comps_and_work))
+#         # Запрос Этап, Здание, Этаж, Ген подрядчик
+#         lns_from_form_with_contactor = CommandsDB.get_all_str_from_form_with_cont(contractor)
+#         table_tb_sheet.write_companies_to_tb(comps_and_work)
+#         table_tb_sheet.write_title_tb_tm_sh()
+#         table_tb_sheet.write_title_companies_tb(comps_and_work)
+#         table_tb_sheet.write_builds_st_lv_tb(lns_from_form_with_contactor)
+#         table_tb_sheet.write_nums_workers(lns_from_form_with_contactor)
+#         table_tb_sheet.write_results_formulas_bottom()
+#         table_tb_sheet.write_results_formulas_right()
+#         table_tb_sheet.write_total_nums_works_to_tb(comps_and_work)
+#     table_tb_sheet.close()
+#     file = open(path_to_file, 'rb')
+#     await bot.send_document(call.message.chat.id, file)
+#     await bot.send_message(call.message.chat.id, 'Нажмите кнопку Назад, чтобы вернутся в меню',
+#                            reply_markup=KBLines.btn_back('TABLE_TIME'))
+
 
 
 ######################
@@ -378,4 +299,3 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(write_user_name, state=StatesAdminUser.edit_user_name)
     dp.register_message_handler(write_user_pin, state=StatesAdminUser.edit_user_pin)
     dp.register_message_handler(write_name_user, state=StatesAdminUser.write_user_name)
-    # dp.register_message_handler(write_name_build, state=StatesAdminUser.write_build)

@@ -81,6 +81,14 @@ async def authorization_step(message: types.Message, state: FSMContext):
         await message.answer('Такого PINCODE нету в системе. Уточните свой пароль')
 
 
+async def restart_auth(call: CallbackQuery):
+    await call.message.edit_text('Бот был перезапущен, требуется повторная авторизация.\n'
+                                 'Введите PINCODE для авторизации.',
+                                 reply_markup=None)
+    await AuthorizationUser.write_password.set()
+
+
+
 async def command_help(message: types.Message):
     await message.answer('ПОМОЩЬ ПОДСКАЗКИ')
 
@@ -90,3 +98,7 @@ def register_handlers_start_work(dp: Dispatcher):
     dp.register_message_handler(command_help, commands=['help'], state='*')
     dp.register_message_handler(authorization_step, state=[AuthorizationUser.write_password])
     dp.register_message_handler(command_start, content_types=types.ContentType.TEXT, state=None)
+
+
+def register_callback_work(dp: Dispatcher):
+    dp.register_callback_query_handler(restart_auth, lambda callback_query: True, state="*")

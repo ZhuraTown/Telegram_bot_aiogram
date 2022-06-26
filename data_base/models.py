@@ -42,6 +42,7 @@ class TableWork(base):
     name_level = Column(String, comment='Этаж')
     contractor = Column(String, default=None, comment='Ген подрядчик')
     form_is_gp = Column(Boolean, default=False, comment='Запись от ГП')
+    id_gp = Column(Integer, comment='ID ГП')
     number_security_p = Column(Integer, default=0, comment='Охрана План')
     number_security_f = Column(Integer, default=0, comment='Охрана Факт')
     number_duty_p = Column(Integer, default=0, comment='Дежурный План')
@@ -77,6 +78,7 @@ class TableNameWork(base):
                      )
     user_id = Column(Integer, comment='Пользователь, добавивший наименование')
     work_name = Column(String, comment='Наименования работ')
+    is_gp = Column(Boolean, comment='Владелец ГП')
 
     def __repr__(self):
         return "<TableNameWork(work_name='{}', owner_id='{}', work_id='{}')".\
