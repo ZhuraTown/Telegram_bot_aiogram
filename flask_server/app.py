@@ -8,18 +8,12 @@ app = Flask(__name__)
 
 @app.route('/builds', methods=['GET'])
 def get_builds():
+    """ Запрос к БД для получения Зданий привязанных к Ген Подрядчику """
     builds = {}
-    for build in CommandsDB.get_all_names_builds():
+    cont_id = request.args.get('cont')
+    for build in CommandsDB.get_all_builds_with_id_gp(cont_id):
         builds[build[0]] = build[1]
     return jsonify(builds)
-
-
-@app.route('/contactors', methods=['GET'])
-def get_contactors():
-    contactors = {}
-    for company in CommandsDB.get_names_all_users(without_admin=True):
-        contactors[company] = company
-    return jsonify(contactors)
 
 
 @app.route('/create_form', methods=['GET', "POST"])
@@ -30,6 +24,8 @@ def create_form():
         date = data.pop('date')[0]
         company = data.pop('company')[0]
         contractor = data.pop('contractor')[0]
+        user_id = data.pop('comp_id')[0]
+        gp_id = data.pop('cont_id')[0]
         form_sheet = {}
         for line in range(0, len(data.get('select'))):
             for key in data.keys():
@@ -37,22 +33,44 @@ def create_form():
                     form_sheet[key] = data.get(key)[line]
                 else:
                     form_sheet[key] = data.get(key)[line]
-            CommandsDB.add_new_string_work(user_name=company, name_work=name_work, contractor=contractor,
-                                           name_build=form_sheet.get('select'), level=form_sheet.get('level'),
-                                           name_stage=form_sheet.get('stage'),
-                                           number_worker=[int(form_sheet['worker_p']), int(form_sheet['worker_f'])],
-                                           number_security=[int(form_sheet['sec_p']), int(form_sheet['sec_f'])],
-                                           number_duty=[int(form_sheet['duty_p']), int(form_sheet['duty_f'])],
-                                           number_itr=[int(form_sheet['itr_p']), int(form_sheet['itr_f'])])
+            if gp_id == user_id:
+                CommandsDB.add_new_string_work(user_name=company, name_work=name_work, contractor=contractor,
+                                               is_gp=True,
+                                               name_build=form_sheet.get('select'), level=form_sheet.get('level'),
+                                               name_stage=int(form_sheet.get('stage')),
+                                               number_worker=[int(form_sheet['worker_p']), int(form_sheet['worker_f'])],
+                                               number_security=[int(form_sheet['sec_p']), int(form_sheet['sec_f'])],
+                                               number_duty=[int(form_sheet['duty_p']), int(form_sheet['duty_f'])],
+                                               number_itr=[int(form_sheet['itr_p']), int(form_sheet['itr_f'])],
+                                               id_gp=int(gp_id))
+            else:
+                CommandsDB.add_new_string_work(user_name=company, name_work=name_work, contractor=contractor,
+                                               is_gp=False,
+                                               name_build=form_sheet.get('select'), level=form_sheet.get('level'),
+                                               name_stage=int(form_sheet.get('stage')),
+                                               number_worker=[int(form_sheet['worker_p']), int(form_sheet['worker_f'])],
+                                               number_itr=[int(form_sheet['itr_p']), int(form_sheet['itr_f'])],
+                                               number_duty=[0, 0],
+                                               number_security=[0, 0],
+                                               id_gp=int(gp_id))
+
         msg = "Форма успешно отправлена на сервер! Можете закрыть страницу"
         return render_template('finish_create_form.html', company=company, date=date, name_work=name_work, msg=msg)
 
     elif request.method == "GET":
+        cont_id = request.args.get('cont_id')
         name_work = request.args.get('work')
         company = request.args.get('company')
+        company_id = request.args.get('comp_id')
         date = datetime.today().strftime('%d.%m.%y')
-        return render_template('create_form.html', company=company,
-                               name_work=name_work, date=date)
+        contractor = request.args.get('cont')
+        is_gp = bool(int(request.args.get('is_gp')))
+        if is_gp:
+            return render_template('create_form_GP.html', company=company, comp_id=company_id,
+                                   name_work=name_work, date=date, cont_id=cont_id, contractor=contractor)
+        else:
+            return render_template('create_form_user.html', company=company, comp_id=company_id,
+                                   name_work=name_work, date=date, cont_id=cont_id, contractor=contractor)
 
 
 @app.route('/', methods=['GET', "POST"])
@@ -68,7 +86,6 @@ def main_page():
 def page_user():
     name_work = request.args.get('work')
     company = request.args.get('company')
-    date = datetime.today().strftime('%d.%m.%y')
 
     if request.method == "POST":
         data = request.form.to_dict(flat=False)
@@ -77,8 +94,9 @@ def page_user():
         date = data.pop('date')[0]
         company = data.pop('company')[0]
         contractor = data.pop('contractor')[0]
+        user_id = data.pop('comp_id')[0]
+        gp_id = data.pop('cont_id')[0]
         form_sheet = {}
-
         all_ids_edit = data.pop('ids')[0]
         ids_edit = [int(i) for i in data.get('id-str-form')] if data.get('id-str-form') \
             else []
@@ -91,19 +109,28 @@ def page_user():
                         form_sheet[key] = data.get(key)[line] if data.get(key)[line] else 0
                     else:
                         form_sheet[key] = data.get(key)[line] if data.get(key) else 0
-                CommandsDB.add_new_string_work(user_name=company, name_work=name_work,
-                                               contractor=contractor,
-                                               name_build=form_sheet.get('select'),
-                                               level=form_sheet.get('level'),
-                                               name_stage=form_sheet.get('stage'),
-                                               number_worker=[int(form_sheet['worker_p']),
-                                                              int(form_sheet['worker_f'])],
-                                               number_security=[int(form_sheet['sec_p']),
-                                                                int(form_sheet['sec_f'])],
-                                               number_duty=[int(form_sheet['duty_p']),
-                                                            int(form_sheet['duty_f'])],
-                                               number_itr=[int(form_sheet['itr_p']),
-                                                           int(form_sheet['itr_f'])])
+                if gp_id == user_id:
+                    CommandsDB.add_new_string_work(user_name=company, name_work=name_work, contractor=contractor,
+                                                   is_gp=True,
+                                                   name_build=form_sheet.get('select'), level=form_sheet.get('level'),
+                                                   name_stage=int(form_sheet.get('stage')),
+                                                   number_worker=[int(form_sheet['worker_p']),
+                                                                  int(form_sheet['worker_f'])],
+                                                   number_security=[int(form_sheet['sec_p']), int(form_sheet['sec_f'])],
+                                                   number_duty=[int(form_sheet['duty_p']), int(form_sheet['duty_f'])],
+                                                   number_itr=[int(form_sheet['itr_p']), int(form_sheet['itr_f'])],
+                                                   id_gp=int(gp_id))
+                else:
+                    CommandsDB.add_new_string_work(user_name=company, name_work=name_work, contractor=contractor,
+                                                   is_gp=False,
+                                                   name_build=form_sheet.get('select'), level=form_sheet.get('level'),
+                                                   name_stage=int(form_sheet.get('stage')),
+                                                   number_worker=[int(form_sheet['worker_p']),
+                                                                  int(form_sheet['worker_f'])],
+                                                   number_itr=[int(form_sheet['itr_p']), int(form_sheet['itr_f'])],
+                                                   number_duty=[0, 0],
+                                                   number_security=[0, 0],
+                                                   id_gp=int(gp_id))
         form_sheet = {}
         if data.get('select-form'):
             ids = data.get('id-str-form')
@@ -114,15 +141,26 @@ def page_user():
                             form_sheet[key] = data.get(key)[line] if data.get(key)[line] else 0
                         else:
                             form_sheet[key] = data.get(key)[line] if data.get(key) else 0
-                CommandsDB.edit_form_string_with_id(
-                    id_string=ids[line], name_stage=form_sheet.get('stage-form'),
-                    level=form_sheet.get('level-form'),
-                    name_build=form_sheet.get('select-form'), contractor=contractor,
-                    number_security=[int(form_sheet['sec_p-form']), int(form_sheet['sec_f-form'])],
-                    number_duty=[int(form_sheet['duty_p-form']), int(form_sheet['duty_f-form'])],
-                    number_worker=[int(form_sheet['worker_p-form']), int(form_sheet['worker_f-form'])],
-                    number_itr=[int(form_sheet['itr_p-form']), int(form_sheet['itr_p-form'])],
-                )
+                if gp_id == user_id:
+                    CommandsDB.edit_form_string_with_id(
+                        id_string=ids[line], name_stage=form_sheet.get('stage-form'),
+                        level=form_sheet.get('level-form'),
+                        name_build=form_sheet.get('select-form'), contractor=contractor,
+                        number_security=[int(form_sheet['sec_p-form']), int(form_sheet['sec_f-form'])],
+                        number_duty=[int(form_sheet['duty_p-form']), int(form_sheet['duty_f-form'])],
+                        number_worker=[int(form_sheet['worker_p-form']), int(form_sheet['worker_f-form'])],
+                        number_itr=[int(form_sheet['itr_p-form']), int(form_sheet['itr_p-form'])],
+                    )
+                else:
+                    CommandsDB.edit_form_string_with_id(
+                        id_string=ids[line], name_stage=form_sheet.get('stage-form'),
+                        level=form_sheet.get('level-form'),
+                        name_build=form_sheet.get('select-form'), contractor=contractor,
+                        number_security=[0, 0],
+                        number_duty=[0, 0],
+                        number_worker=[int(form_sheet['worker_p-form']), int(form_sheet['worker_f-form'])],
+                        number_itr=[int(form_sheet['itr_p-form']), int(form_sheet['itr_p-form'])],
+                    )
 
         if len(ids_edit) != len(all_ids_edit):
             for id_str in all_ids_edit:
@@ -133,13 +171,24 @@ def page_user():
 
     elif request.method == "GET":
         ids = request.args.get('ids').split(',')
-        contractor = request.args.get('contractor')
+        company_id = request.args.get('comp_id')
+        cont_id = request.args.get('cont_id')
+        date = datetime.today().strftime('%d.%m.%y')
+        contractor = request.args.get('cont')
+        is_gp = bool(int(request.args.get('is_gp')))
+
         forms = {}
         for id_form in ids:
             if CommandsDB.check_that_str_form_with_id_in_db(id_form):
                 forms[id_form] = CommandsDB.get_str_form_with_id(id_form)[0]
-        return render_template('edit_form.html', forms=forms, name_work=name_work,
-                               company=company, date=date, ids=ids, contractor=contractor)
+        if is_gp:
+            return render_template('edit_form_GP.html', forms=forms, name_work=name_work,
+                                   company=company, date=date, ids=ids, contractor=contractor,
+                                   comp_id=company_id, cont_id=cont_id)
+        else:
+            return render_template('edit_form_USER.html', forms=forms, name_work=name_work,
+                                   company=company, date=date, ids=ids, contractor=contractor,
+                                   comp_id=company_id, cont_id=cont_id)
 
 
 if __name__ == '__main__':

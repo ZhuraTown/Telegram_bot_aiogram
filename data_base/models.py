@@ -18,8 +18,9 @@ class User(base):
     name = Column(String)
     password = Column(String, default='000000')
     admin = Column(Boolean, default=False)
-    cont_name = Column(String, default=None, comment='Имя Ген подрядчика')
-    contractor = Column(Boolean, default=False, comment='Генподрядчик')
+    cont_name = Column(String, default=None, comment='Имя ГР')
+    cont_id = Column(Integer, default=-1, comment='ID ГП добавившего подрядчика')
+    contractor = Column(Boolean, default=False, comment='Является ли пользователь ГП')
 
     def __repr__(self):
         return '<User(user_id="{}", name="{}",password="{}", admin="{}", cont_name="{}", contractor="{}")>'. \
@@ -36,10 +37,12 @@ class TableWork(base):
                            )
     user_name = Column(String, comment='Автор записи')
     name_work = Column(String, comment='Наименование работ')
-    name_stage = Column(Integer, comment='Наименование этапа')
-    name_build = Column(String, comment='Наименование здания')
-    name_level = Column(String, comment='Наименование этажа')
+    name_stage = Column(Integer, comment='Номер этапа')
+    name_build = Column(String, comment='Здание')
+    name_level = Column(String, comment='Этаж')
     contractor = Column(String, default=None, comment='Ген подрядчик')
+    form_is_gp = Column(Boolean, default=False, comment='Запись от ГП')
+    id_gp = Column(Integer, comment='ID ГП')
     number_security_p = Column(Integer, default=0, comment='Охрана План')
     number_security_f = Column(Integer, default=0, comment='Охрана Факт')
     number_duty_p = Column(Integer, default=0, comment='Дежурный План')
@@ -75,6 +78,7 @@ class TableNameWork(base):
                      )
     user_id = Column(Integer, comment='Пользователь, добавивший наименование')
     work_name = Column(String, comment='Наименования работ')
+    is_gp = Column(Boolean, comment='Владелец ГП')
 
     def __repr__(self):
         return "<TableNameWork(work_name='{}', owner_id='{}', work_id='{}')".\
@@ -89,6 +93,7 @@ class TableNameBuild(base):
                       primary_key=True,
                       autoincrement=True
                       )
+    id_cont = Column(Integer, comment='ID Ген подрядчика, который добавил здание')
     name_cont = Column(String, comment='Привязанность к Ген подрядчику')
     name_build = Column(String, comment='Наименование здания')
 

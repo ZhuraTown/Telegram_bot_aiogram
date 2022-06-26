@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="stylesheet" href="../static/time_sh.css">
+    <title>Табель времени</title>
+  </head>
+  <body>
+
+  <div class="container" id="place_sheet">
+      <form action="" id="form_timesheet" method="post">
+            <div class="container" id="title-container">
+                <h5><input type="text" id="company" value="{{ company }}" readonly name="company"></h5>
+                <h5><input type="text" id="date" value="{{ date }}" readonly name="date"></h5>
+                <h5><input type="text" id="contractor" value="{{ contractor }}" readonly name="contractor"></h5>
+                <h5><textarea id="name_work" readonly name="name_work" readonly>{{ name_work }}</textarea></h5>
+                <input type="text" id="ids" name="ids" value="{{ ids }}" readonly hidden>
+                <input  type="number" id="cont_id" value="{{ cont_id }}" name="cont_id" readonly hidden>
+                <input  type="number" id="comp_id" value="{{ comp_id }}" name="comp_id" readonly hidden>
+            </div>
+          {% for form, value in  forms.items() %}
+          <div class="container form-box" id="{{ form }}">
+              <div class="form-group">
+                <input type="text" value="{{ form }}" hidden name="id-str-form" id="id-str-form">
+                <div class="build_stage_level">
+                <div class="input_build">
+                    <select name="select-form" id="build-form" required >
+                        <option value="{{ value.name_build }}">{{ value.name_build }}</option>
+                    </select>
+                </div>
+                    <div class="input_inline">
+                        <div class="left-block" >
+                            <input type="text" class="form-control only-block" placeholder="Этаж"
+                                   name="level-form" id="level" value="{{ value.name_level }}" required  >
+                        </div>
+                        <div class="right-block">
+                            <input type="number" class="form-control only-block" placeholder="Этап"
+                                   name="stage-form" id="stage" value="{{ value.name_stage }}" required >
+                        </div>
+                    </div>
+                    </div>
+                <div class="workers">
+                    <h4>Рабочие</h4>
+                    <div class="input_inline">
+                        <div class="left-block" >
+                            <input type="number" class="form-control only-block" placeholder="Плановый"
+                                   name="worker_p-form" id="worker_p" value="{{ value.number_worker_p }}">
+                        </div>
+                        <div class="right-block">
+                            <input type="number" class="form-control only-block" placeholder="Фактический"
+                                   name="worker_f-form" id="worker_f" value="{{ value.number_worker_f }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="workers">
+                    <h4>ИТР</h4>
+                    <div class="input_inline">
+                        <div class="left-block" >
+                            <input type="number" class="form-control only-block" placeholder="Плановый"
+                                   name="itr_p-form" id="itr_p" value="{{ value.number_ITR_p }}">
+                        </div>
+                        <div class="right-block">
+                            <input type="number" class="form-control only-block" placeholder="Фактический"
+                                   name="itr_f-form" id="itr_f" value="{{ value.number_ITR_f }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+          <div class="button-delete">
+          <input type="button" value="Удалить" class="btn delete" id="btn-clear" onclick="del_form({{ form }});">
+          </div>
+          </div>
+          {% endfor %}
+        </form>
+        <div class="btn-add">
+            <input type="button" value="Добавить" class="btn" id="btn-add">
+        </div>
+      <div class="btn-send">
+        <input form="form_timesheet" type="submit" value="Отправить" class="btn">
+      </div>
+      </div>
+  <script src = "{{ url_for('static', filename = 'js/form_USER.js') }}"></script>
+  </body>
+</html>

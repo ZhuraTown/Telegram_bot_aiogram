@@ -84,9 +84,9 @@ class KBLines:
         for data in data_works:
             btn_name_work = InlineKeyboardButton(text=f'{data[0]}', callback_data=btn_names_msg.new(
                 step_menu=step_menu, name=f'{data[1]},{data[3]}', name_btn='Форма'))
-            btn_contractor = InlineKeyboardButton(text=f'{data[2]}', callback_data=btn_names_msg.new(
-                step_menu=step_menu, name=f'{data[1]},{data[3]}', name_btn='Форма'))
-            kb_inline.row(btn_name_work, btn_contractor)
+            # btn_contractor = InlineKeyboardButton(text=f'{data[2]}', callback_data=btn_names_msg.new(
+            #     step_menu=step_menu, name=f'{data[1]},{data[3]}', name_btn='Форма'))
+            kb_inline.row(btn_name_work)
         btn_back = InlineKeyboardButton(text='Назад', callback_data=menu_callback_user.new(
             step_menu=f'{step_menu}', name_btn='Назад'
         ))
@@ -148,7 +148,7 @@ class KBLines:
             btn_pin_code = InlineKeyboardButton(text=f'{name.password}', callback_data=btn_names_msg.new(
                 step_menu=step_menu, name=f'{name.user_id}', name_btn='Изменить'))
             btn_del = InlineKeyboardButton(text='Удалить', callback_data=btn_names_msg.new(
-                step_menu=step_menu, name=f'{name.name}', name_btn='Удалить'
+                step_menu=step_menu, name=f'{name.user_id}', name_btn='Удалить'
             ))
             kb_inline.row(btn_name_work, btn_pin_code, btn_del)
         btn_add = InlineKeyboardButton(text='Добавить', callback_data=menu_callback_user.new(

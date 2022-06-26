@@ -56,5 +56,19 @@ import random
 #
 # CommandsDB.add_name_work('Обеспечение', 2)
 
-print(CommandsDB.get_all_users(user_password=True))
+# print(CommandsDB.get_all_users(user_password=True))
 # print(CommandsDB.get_all_users(gp='ЕСТ'))
+#
+# for lin in CommandsDB.get_all_names_builds():
+#     print(CommandsDB.del_name_build(lin[1]))
+
+# print(CommandsDB.get_all_users(gp='ЛИИС', gp_id=data['id_user']))
+# gp = 'ЛИИС'
+# print(CommandsDB.get_stages_today_from_form(gp))
+
+# # print(CommandsDB.get_all_str_from_form_with_cont(2)[0][6:15])
+# date = datetime.today().date()
+#
+# print(CommandsDB.get_name_forms_with_user_with_date('ЛИИС', date, 2))
+# print(CommandsDB.get_all_users(user_password=True))
+# print(CommandsDB.get_user_id_with_name("ЛИИС", 2))

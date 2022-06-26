@@ -4,7 +4,7 @@ from aiogram import executor
 from data_base.db_commands import CommandsDB
 from handlers.users import register_handlers_users
 from handlers.admin import register_handlers_admin
-from handlers.start_work import register_handlers_start_work
+from handlers.start_work import register_handlers_start_work, register_callback_work
 
 
 async def on_startup(_):
@@ -19,7 +19,7 @@ async def shutdown(dp):
 register_handlers_start_work(dp)
 register_handlers_users(dp)
 register_handlers_admin(dp)
-
+register_callback_work(dp)
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup, on_shutdown=shutdown)

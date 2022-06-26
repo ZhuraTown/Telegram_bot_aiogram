@@ -1,7 +1,7 @@
 // import { URL_WORK } from '../../../constants'
 
-// const URL_WORK = "http://127.0.0.1:5000"
-const URL_WORK = "http://c120-194-186-155-46.eu.ngrok.io/"
+const URL_WORK = "http://127.0.0.1:5000/"
+// const URL_WORK = "http://c120-194-186-155-46.eu.ngrok.io/"
 
 
 function add_str() {
@@ -32,7 +32,7 @@ function add_str() {
         '                    </div>\n' +
         '                    </div>\n' +
         '                <div class="workers">\n' +
-        '                    <h4>Рабочие</h4>\n' +
+        '                    <h4>Подсобные рабочие</h4>\n' +
         '                    <div class="input_inline">\n' +
         '                        <div class="left-block" >\n' +
         '                            <input type="number" class="form-control only-block" placeholder="Плановый" name="worker_p" id="worker_p" value="0">\n' +
@@ -43,7 +43,7 @@ function add_str() {
         '                    </div>\n' +
         '                </div>\n' +
         '                <div class="workers">\n' +
-        '                    <h4>ИТР</h4>\n' +
+        '                    <h4>ИТР ПТО</h4>\n' +
         '                    <div class="input_inline">\n' +
         '                        <div class="left-block" >\n' +
         '                            <input type="number" class="form-control only-block" placeholder="Плановый" name="itr_p" id="itr_p" value="0">\n' +
@@ -93,8 +93,9 @@ async function getBuildForStateForm(){
         element.append(newOption)
     }
     let only_build = document.getElementById('build')
+    let id_contractor = document.getElementById('cont_id').value
     if (only_build != null){
-    let response = await fetch(URL_WORK + "builds",{
+    let response = await fetch(URL_WORK + "builds" + `?&cont=${id_contractor}`,{
         method: "GET"
     } ).then(response => response.json())
     for(let key in response){
@@ -108,7 +109,8 @@ async function getBuildsWithIdForm(id_select){
         let select = document.getElementById(id_select)
         select.append(newOption)
     }
-    let response = await fetch(URL_WORK + "builds",{
+    let id_contractor = document.getElementById('cont_id').value
+    let response = await fetch(URL_WORK + "builds" + `?&cont=${id_contractor}`,{
         method: "GET"
     } ).then(response => response.json())
     for(let key in response){
@@ -116,22 +118,22 @@ async function getBuildsWithIdForm(id_select){
     }
     }
 
-async function getContractors() {
-        function addOption(key, value) {
-        let newOption = new Option(value, key)
-        let select = document.getElementById("contractor")
-        select.append(newOption)
-    }
-        let response = await fetch(URL_WORK + "contactors",{
-        method: "GET"
-    } ).then(response => response.json())
-    let contractors = document.querySelectorAll("#contractor")
-        contractors.forEach(function(item, i, arr) {
-            for(let key in response){
-                if (item.children[0].value !== response[key]) {
-                    addOption(response[key], response[key], item)
-                }}})
-    }
+// async function getContractors() {
+//         function addOption(key, value) {
+//         let newOption = new Option(value, key)
+//         let select = document.getElementById("contractor")
+//         select.append(newOption)
+//     }
+//         let response = await fetch(URL_WORK + "contactors",{
+//         method: "GET"
+//     } ).then(response => response.json())
+//     let contractors = document.querySelectorAll("#contractor")
+//         contractors.forEach(function(item, i, arr) {
+//             for(let key in response){
+//                 if (item.children[0].value !== response[key]) {
+//                     addOption(response[key], response[key], item)
+//                 }}})
+//     }
 
 
 async function getBuilds(){
@@ -140,7 +142,8 @@ async function getBuilds(){
         element.append(newOption)
         }
     //    Запрашиваю имена зданий
-    let response = await fetch(URL_WORK + "builds",{
+    let id_contractor = document.getElementById('cont_id').value
+    let response = await fetch(URL_WORK + "builds" + `?&cont=${id_contractor}`,{
         method: "GET"
     } ).then(response => response.json())
     //  Собираю список всех доступных полей select, куда добавить здания
@@ -157,7 +160,7 @@ let btn_add = document.getElementById('btn-add')
 
 btn_add.addEventListener('click', add_str)
 
-getContractors()
+
 getBuildForStateForm()
 getBuilds()
 

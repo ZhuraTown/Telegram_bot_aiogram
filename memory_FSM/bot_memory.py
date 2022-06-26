@@ -41,6 +41,8 @@ class StatesUsers(StatesGroup):
     create_form_sel_name_work = State()
     get_url_form = State()
 
+    get_table = State()  # Выгрузить таблицу
+
     get_forms = State()  # Просмотреть формы
     get_form_with_name = State()
     edit_form = State()
