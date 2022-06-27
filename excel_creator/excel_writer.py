@@ -178,7 +178,7 @@ class ExcelWriter:
 
     def _write_title_work(self, count_companies: int, stages_db: list):
         """ Заполнение оглавления табеля (Численность персонала, задействованного...) """
-        len_title = 4 + count_companies * 8 + 2
+        len_title = 4 + count_companies * 8 + 2 if 4 + count_companies * 8 + 2 >= 24 else 24
         row_title = 1
         stages = stages_db
         stages.sort()

@@ -100,3 +100,18 @@ class TableNameBuild(base):
 
     def __repr__(self):
         return "<builds_work(build_id='{}', name_build='{}')".format(self.build_id, self.name_build)
+
+
+class Rimender(base):
+    __tablename__ = 'reminder_table'
+    
+    rem_id = Column(Integer, unique=True,
+                    primary_key=True,
+                    autoincrement=True)
+    
+    chat_id = Column(String, unique=True,
+                     comment='ID пользователя/чата')
+    is_remind = Column(Boolean, comment='Напоминание')
+    
+    def __repr__(self):
+        return "<reminder_table(rem_id='{}', chat_id='{}', is_remind='{}')>".format(self.rem_id, self.chat_id, self.is_remind)
