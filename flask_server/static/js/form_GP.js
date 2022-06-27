@@ -1,7 +1,5 @@
-// import { URL_WORK } from '../../../constants'
 
 const URL_WORK = "http://127.0.0.1:5000/"
-// const URL_WORK = "http://c120-194-186-155-46.eu.ngrok.io/"
 
 
 function add_str() {

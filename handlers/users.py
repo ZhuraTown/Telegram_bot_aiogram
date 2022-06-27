@@ -352,7 +352,9 @@ async def menu_build(call: CallbackQuery, callback_data: dict, state: FSMContext
         await bot.answer_callback_query(call.id, cache_time=2)
         id_build = callback_data.get('name')
         name_build = CommandsDB.get_name_build_with_id(id_build)
-        await call.message.edit_text(f'{name_build}', reply_markup=KBLines.btn_del_or_back('BUILD'))
+        await call.message.edit_text(f'Выбрано здание: {"<b>"}{name_build}{"</b>"}',
+                                     reply_markup=KBLines.btn_del_or_back('BUILD'),
+                                     parse_mode="HTML")
         await StatesUsers.build.set()
         data['здание'] = name_build
         data['здание_id'] = id_build
@@ -364,13 +366,15 @@ async def menu_build(call: CallbackQuery, callback_data: dict, state: FSMContext
 async def del_build(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         name_build = data['здание']
-        if CommandsDB.del_name_build(name_build):
+        build_id = data["здание_id"]
+        if CommandsDB.del_name_build(build_id):
             await bot.answer_callback_query(call.id,
                                             text=f'Здание : {name_build},\n'
                                                  f'Успешно удалено.', show_alert=True)
         await StatesUsers.builds.set()
+        builds = CommandsDB.get_all_builds_with_gp(data['user_name'])
         await call.message.edit_text('Для удаления здания, нажмите на его наименование и следуйте инструкции',
-                                     reply_markup=KBLines.get_all_builds('BUILDS', CommandsDB.get_all_names_builds()))
+                                     reply_markup=KBLines.get_all_builds('BUILDS', builds))
 
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Добавить'],

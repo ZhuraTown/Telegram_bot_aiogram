@@ -5,7 +5,7 @@ from typing import List, Dict, Union, Any
 from sqlalchemy import distinct, func
 from data_base.database import session
 
-from data_base.models import User, TableNameWork, base, engine, TableNameBuild, TableWork
+from data_base.models import User, TableNameWork, base, engine, TableNameBuild, TableWork, TableReminder
 
 
 class CommandsDB:
@@ -75,18 +75,14 @@ class CommandsDB:
 
     @staticmethod
     def get_all_user_with_gp(gp: str) -> list:
+        """ Получить все имена Пользователей с ГП """
         return [name[0] for name in session.query(User.name).filter(User.cont_name == gp).order_by(User.name).all()]
 
     @staticmethod
     def get_all_gp() -> list:
+        """ Получить все имена ГП """
         return [name[0] for name in session.query(User.name).filter(User.contractor == True).order_by(User.name).all()]
 
-    @staticmethod
-    def get_names_all_users(without_admin=False) -> list:
-        if without_admin:
-            return [name[0] for name in session.query(User.name).filter(User.admin == False).order_by(User.name).all()]
-        else:
-            return [name[0] for name in session.query(User.name).order_by(User.name).all()]
 
     @staticmethod
     def add_get_contractor(name: str, password: str or int):
@@ -129,25 +125,6 @@ class CommandsDB:
             return False
         finally:
             session.commit()
-
-    # @staticmethod
-    # def add_user_system(name: str, password: str or int):
-    #     try:
-    #         if session.query(User.name).filter(User.name == name).count() == 0:
-    #             session.add(User(name=name,
-    #                              password=password,
-    #                              contractor=True))
-    #             session.flush()
-    #             return True
-    #         else:
-    #             print(f"Ген Подрядчик {name}, уже есть в БД")
-    #             return False
-    #     except:
-    #         session.rollback()
-    #         print(f'Ошибка записи {name} в БД')
-    #         return False
-    #     finally:
-    #         session.commit()
 
     @staticmethod
     def update_name_user_with_gp_with_name(id_user: int, new_name: str, gp: str):
@@ -203,29 +180,16 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def delete_user_with_name(name):
+    def delete_user_with_id(id_user: int or str):
+        """ Удалить пользователя с ID """
         try:
-            session.query(User).filter(User.name == name).delete()
-            session.flush()
-            print(f"Удаление прошло успешно.Пользователь с именем {name}")
-            return True
-        except:
-            session.rollback()
-            print(f'Ошибка удаления пользователя с именем {name} из БД')
-            return False
-        finally:
-            session.commit()
-
-    @staticmethod
-    def delete_user_with_id(id):
-        try:
-            session.query(User).filter(User.user_id == id).delete()
+            session.query(User).filter(User.user_id == id_user).delete()
             session.flush()
         except:
             session.rollback()
-            print(f'Ошибка удаления пользователя с ID {id} из БД')
+            print(f'Ошибка удаления пользователя с ID {id_user} из БД')
         finally:
-            print(f"Удаление прошло успешно.Пользователь с ID {id}")
+            print(f"Удаление прошло успешно.Пользователь с ID {id_user}")
             session.commit()
 
     #################################
@@ -233,9 +197,11 @@ class CommandsDB:
     ################################
     @staticmethod
     def add_name_work(name: str, user_id: str or int, is_gp: bool) -> bool:
+        """ Добавить наименование работ  """
         try:
             if session.query(TableNameWork.work_name).filter(TableNameWork.work_name == name,
-                                                             TableNameWork.user_id == user_id).count() == 0:
+                                                             TableNameWork.user_id == user_id,
+                                                             TableNameWork.is_gp == is_gp).count() == 0:
                 name_work = TableNameWork(work_name=name, user_id=user_id)
                 session.add(name_work)
                 session.flush()
@@ -250,6 +216,7 @@ class CommandsDB:
 
     @staticmethod
     def del_name_work(id_name):
+        """ Удалить наименование работ по ID """
         try:
             session.query(TableNameWork).filter(TableNameWork.work_id == id_name).delete()
             session.flush()
@@ -273,11 +240,6 @@ class CommandsDB:
         row = session.query(TableNameWork.work_name).filter(TableNameWork.work_id == id_name).one()
         return row
 
-    @staticmethod
-    def get_name_work_id_for_work_name(work_name):
-        row = session.query(TableNameWork.work_id).filter(TableNameWork.work_name == work_name).one()
-        return row[0]
-
     ##################################
     #             ЗДАНИЯ
     #################################
@@ -299,27 +261,23 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def del_name_build(name):
+    def del_name_build(build_id: str or int):
+        """ Удаление здание с ID """
         try:
-            session.query(TableNameBuild).filter(TableNameBuild.name_build == name).delete()
+            session.query(TableNameBuild).filter(TableNameBuild.build_id == build_id).delete()
             session.flush()
-            print(f"Удаление {name} успешно")
+            print(f"Удаление {build_id} успешно")
             return True
         except:
             session.rollback()
-            print(f'Ошибка удаления {name} из БД')
+            print(f'Ошибка удаления {build_id} из БД')
             return False
         finally:
             session.commit()
 
     @staticmethod
-    def get_all_names_builds():
-        rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build, TableNameBuild.name_cont).order_by(
-            TableNameBuild.name_build).all()
-        return rows
-
-    @staticmethod
     def get_all_builds_with_gp(gp: str) -> list:
+        """ Получить все здания с ГП (gp) """
         rows = session.query(TableNameBuild.build_id, TableNameBuild.name_build, TableNameBuild.name_cont) \
             .filter(TableNameBuild.name_cont == gp) \
             .order_by(TableNameBuild.name_build).all()
@@ -335,6 +293,7 @@ class CommandsDB:
 
     @staticmethod
     def get_name_build_with_id(build_id):
+        """ Получить наименование здание по ID """
         rows = session.query(TableNameBuild.name_build).filter(TableNameBuild.build_id == build_id).one()
         return rows[0]
 
@@ -346,6 +305,7 @@ class CommandsDB:
                             name_build: str, level: str, number_security: list,
                             number_duty: list, number_worker: list, number_itr: list,
                             contractor: str, is_gp: bool, id_gp: int):
+        """ Добавить запись формы в БД """
         try:
             date = datetime.today().date()
             tb = TableWork
@@ -378,6 +338,7 @@ class CommandsDB:
                                  number_worker: list,
                                  number_itr: list,
                                  contractor: str):
+        """ Редактировать запись формы с id_string """
         tb = TableWork
         try:
             session.query(tb).filter(tb.work_sting_id == id_string). \
@@ -397,16 +358,6 @@ class CommandsDB:
             return False
         finally:
             session.commit()
-
-    @staticmethod
-    def get_forms_with_user_with_name(user_name: str, name_work: str) -> List[
-        Dict[str, Union[Dict[str, List[Any]], Any]]]:
-        TB = TableWork
-        rows = session.query(TB.user_name, TB.name_work, TB.name_stage, TB.name_build, TB.name_level, TB.date_created,
-                             TB.number_security_p, TB.number_security_f, TB.number_duty_p, TB.number_duty_f,
-                             TB.number_worker_p, TB.number_worker_f, TB.number_ITR_p, TB.number_ITR_f,
-                             ).filter(TB.user_name == user_name, TB.name_work == name_work).all()
-        return rows
 
     @staticmethod
     def get_name_forms_with_user_with_date(user_name: str, date: datetime.today().date(),
@@ -437,6 +388,7 @@ class CommandsDB:
 
     @staticmethod
     def get_ids_str_form_with_work_user_today(user_name: str, name_work: str, contractor: str) -> list:
+        """ Получить ID записей формы у пользователя user_name с ГП contractor """
         date_today = datetime.today().date()
         rows = session.query(TableWork.work_sting_id). \
             filter(TableWork.user_name == user_name,
@@ -445,12 +397,6 @@ class CommandsDB:
                    TableWork.contractor == contractor) \
             .order_by(TableWork.name_stage, TableWork.name_build, TableWork.name_level).all()
         return [id_form.work_sting_id for id_form in rows]
-
-    @staticmethod
-    def get_contractors_today_from_form() -> list:
-        date_today = datetime.today().date()
-        row = session.query(TableWork.contractor).filter(TableWork.date_created == date_today).distinct().all()
-        return [i[0] for i in row]
 
     @staticmethod
     def get_stages_today_from_form(cont: str or int) -> list:
@@ -471,10 +417,12 @@ class CommandsDB:
 
     @staticmethod
     def check_that_str_form_with_id_in_db(id_str: int or str) -> bool:
+        """ Проверить, что запись формы с ID есть в БД """
         return True if session.query(TableWork.work_sting_id).filter(TableWork.work_sting_id == id_str).all() else False
 
     @staticmethod
     def get_str_form_with_id(id_str: int or str) -> list:
+        """ Получить запись формы из БД по ID Записи """
         TB = TableWork
         rows = session.query(TB.work_sting_id, TB.contractor, TB.name_stage, TB.name_build, TB.name_level,
                              TB.number_security_p, TB.number_security_f, TB.number_duty_p, TB.number_duty_f,
@@ -484,6 +432,7 @@ class CommandsDB:
 
     @staticmethod
     def get_all_str_from_form_with_cont(gp_id: str or int) -> list:
+        """ Получить все записи с Ген подрядчиком по gp_ID """
         TB = TableWork
         date_today = datetime.today().date()
         rows = session.query(TB.name_stage, TB.name_build, TB.name_level, TB.contractor, TB.user_name, TB.name_work,
@@ -506,3 +455,43 @@ class CommandsDB:
                              ).all()
 
         return rows
+
+    ###################
+    #   USER_CHAT_IDS
+    ###################
+    @staticmethod
+    def add_new_chat_id_user(chat_id: str or int):
+        """ Добавить нового пользователя в БД напоминания и дать статус True или добавить напоминание зашедшему юзеру"""
+        try:
+            TB = TableReminder
+            if session.query(TB.chat_id, TB.is_remind).filter(TB.chat_id == chat_id).count() == 0:
+                session.add(TableReminder(chat_id=chat_id, is_remind=True))
+                session.flush()
+                return True
+            else:
+                session.query(TB).filter(TB.chat_id == chat_id).update({'is_remind': True})
+                session.flush()
+        except Exception as e:
+            session.rollback()
+            print(f'Ошибка записи в БД {e}')
+            return False
+        finally:
+            session.commit()
+
+
+
+    @staticmethod
+    def change_state_reminder_chat_id(chat_id: str or int, is_remind: bool):
+        """ Изменить состояние напоминаиня пользователя с chat_id на is_remind """
+        TB = TableReminder
+        try:
+            if session.query(TB.chat_id, TB.is_remind).filter(TB.chat_id == chat_id).count() == 1:
+                session.query(TB).filter(TB.chat_id == chat_id).update({'is_remind': is_remind})
+                session.flush()
+                return True
+        except Exception as e:
+            session.rollback()
+            print(f'Не удалось редактировать запись{chat_id}. Except: {e}')
+            return False
+        finally:
+            session.commit()

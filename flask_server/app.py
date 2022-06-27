@@ -12,7 +12,7 @@ def get_builds():
     builds = {}
     cont_id = request.args.get('cont')
     for build in CommandsDB.get_all_builds_with_id_gp(cont_id):
-        builds[build[0]] = build[1]
+        builds[build[1]] = build[1]
     return jsonify(builds)
 
 

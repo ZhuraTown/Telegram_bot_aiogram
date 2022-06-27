@@ -30,6 +30,7 @@ async def command_start(message: types.Message, state: FSMContext):
                                   AuthorizationUser.correct_password_user])
 async def command_start_back(call: CallbackQuery, state: FSMContext):
     await state.reset_state()
+    CommandsDB.change_state_reminder_chat_id(call.id, False)
     await call.message.edit_text('Вы вернулись в стартовое меню\n'
                                  'Цель бота, упростить заполнение табеля рабочего времени сотрудников Лахта Центр\n'
                                  'Введите PIN_CODE для входа в личный кабинет', reply_markup=None)
@@ -61,12 +62,14 @@ async def authorization_step(message: types.Message, state: FSMContext):
                 data['GP'] = pin_cods[msg][3]
                 data['is_GP'] = pin_cods[msg][4]
                 data['id_GP'] = pin_cods[msg][5]
+                CommandsDB.add_new_chat_id_user(message.chat.id)
                 if data['is_GP']:
                     await message.answer(
                         f'Вы авторизовались как ГП: {"<b>"}{pin_cods[msg][0]}{"</b>"}\n'
                         f'Нажмите кнопку {"<b>"}Продолжить{"</b>"}, чтобы приступить к работе.\n'
                         f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
                         parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_USER'))
+
                 else:
                     await message.answer(
                         f'Вы авторизовались как подрядчик: \n'
@@ -75,6 +78,7 @@ async def authorization_step(message: types.Message, state: FSMContext):
                         f'Нажмите кнопку {"<b>"}Продолжить{"</b>"}, чтобы приступить к работе.\n'
                         f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
                         parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_USER'))
+
 
                 await AuthorizationUser.correct_password_user.set()
     else:

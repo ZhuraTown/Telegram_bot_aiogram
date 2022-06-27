@@ -31,42 +31,6 @@ async def cmd_admin_panel(call: CallbackQuery, state: FSMContext):
     await StatesAdminUser.start_admin_panel.set()
 
 
-#############################
-#    ВЫГРУЗИТЬ ТАБЛИЦЫ
-#############################
-# @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выгрузить'],
-#                                                      step_menu=['ADMIN_PANEL']),
-#                            state=[StatesAdminUser.start_admin_panel])
-# async def get_table_time_sheet(call: CallbackQuery, state: FSMContext, callback_data: dict):
-#     date_today = datetime.datetime.today().date()
-#     await StatesAdminUser.get_table.set()
-#     await call.message.edit_text(f'Таблица подрядчиков за:{"<b>"}{date_today}{"</b>"}',
-#                                  parse_mode='HTML', reply_markup=None)
-#     table_tb_sheet = ExcelWriter('Отчет_по_табелю')
-#     path_to_file = table_tb_sheet.get_path_to_file()
-#     contractors = CommandsDB.get_contractors_today_from_form()
-#     for contractor in contractors:
-#         stages = CommandsDB.get_stages_today_from_form(contractor)
-#         comps_and_work = CommandsDB.get_names_work_companies_from_form()
-#         table_tb_sheet.create_table_header(contractor, stages, len(comps_and_work))
-#         # Запрос Этап, Здание, Этаж, Ген подрядчик
-#         lns_from_form_with_contactor = CommandsDB.get_all_str_from_form_with_cont(contractor)
-#         table_tb_sheet.write_companies_to_tb(comps_and_work)
-#         table_tb_sheet.write_title_tb_tm_sh()
-#         table_tb_sheet.write_title_companies_tb(comps_and_work)
-#         table_tb_sheet.write_builds_st_lv_tb(lns_from_form_with_contactor)
-#         table_tb_sheet.write_nums_workers(lns_from_form_with_contactor)
-#         table_tb_sheet.write_results_formulas_bottom()
-#         table_tb_sheet.write_results_formulas_right()
-#         table_tb_sheet.write_total_nums_works_to_tb(comps_and_work)
-#     table_tb_sheet.close()
-#     file = open(path_to_file, 'rb')
-#     await bot.send_document(call.message.chat.id, file)
-#     await bot.send_message(call.message.chat.id, 'Нажмите кнопку Назад, чтобы вернутся в меню',
-#                            reply_markup=KBLines.btn_back('TABLE_TIME'))
-
-
-
 ######################
 #    ГЛАВНОЕ МЕНЮ
 ######################
@@ -93,10 +57,11 @@ async def get_information_companies(call: CallbackQuery):
 async def delete_user(call: CallbackQuery, callback_data: dict, state: FSMContext):
     await bot.answer_callback_query(call.id)
     async with state.proxy() as data:
-        name_user = callback_data['name']
-        data['user_del'] = name_user
+        name_user = CommandsDB.get_user_with_id(callback_data['name'])[0]
+        data['user_del_id'] = callback_data['name']
+        data['user_del_name'] = name_user
         await StatesAdminUser.del_user.set()
-        await call.message.edit_text(f'Удалить компанию: {"<b>"}{name_user}{"</b>"}?',
+        await call.message.edit_text(f'Удалить ГП: {"<b>"}{name_user}{"</b>"}?',
                                      parse_mode="HTML", reply_markup=KBLines.btn_next_or_back('DEL_USER'))
 
 
@@ -105,12 +70,14 @@ async def delete_user(call: CallbackQuery, callback_data: dict, state: FSMContex
                            state=[StatesAdminUser.del_user])
 async def accept_delete_user(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        name_user = data['user_del']
-        if CommandsDB.delete_user_with_name(name_user):
+        id_user = data['user_del_id']
+        name_user = data['user_del_name']
+        if CommandsDB.delete_user_with_id(id_user):
             await bot.answer_callback_query(call.id,
                                             text=f'Ген.Подрядчик: {name_user}\n'
-                                                 f'Успешно удалена!', show_alert=True)
+                                                 f'Успешн удален!', show_alert=True)
             del data['user_del']
+            del data['user_del_id']
         await StatesAdminUser.get_info_users.set()
         companies = CommandsDB.get_all_users(contractor=True)
         await call.message.edit_text(f'Можно редактировать наименование и PINCODE\n'
@@ -164,8 +131,9 @@ async def write_user_name(message: types.Message, state: FSMContext):
     if len(message.text) < 19:
         async with state.proxy() as data:
             data['new_name'] = message.text
-            await message.answer(f'Новое наименование: {message.text}\n'
-                                 f'Сохранить?', reply_markup=KBLines.btn_next_or_back('SAVE_NEW_NAME'))
+            await message.answer(f'Новое наименование: {"<b>"}{message.text}{"</b>"}\n'
+                                 f'Сохранить?', reply_markup=KBLines.btn_next_or_back('SAVE_NEW_NAME'),
+                                 parse_mode='HTML')
             await StatesAdminUser.edit_user_name_correct.set()
     else:
         await message.answer(f'Введенная строка: {message.text}\n'
@@ -178,7 +146,7 @@ async def write_user_name(message: types.Message, state: FSMContext):
 async def save_new_name_user(call: CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         if CommandsDB.update_gp_user_with_name(data['edit_user'], data['new_name']):
-            await bot.answer_callback_query(call.id, text=f'Наименование: {data["new_name"]}\n'
+            await bot.answer_callback_query(call.id, text=f'Наименование: {"<b>"}{data["new_name"]}{"/<b>"}\n'
                                                           f'Успешно сохранено!', show_alert=True)
             data['edit_user'] = data["new_name"]
             await StatesAdminUser.edit_user.set()
@@ -210,18 +178,22 @@ async def write_user_pin(message: types.Message, state: FSMContext):
             if message.text not in CommandsDB.get_all_users(user_password=True):
                 async with state.proxy() as data:
                     data['new_pin'] = message.text
-                    await message.answer(f'Новый PIN_CODE: {message.text}\n'
-                                         f'Сохранить?', reply_markup=KBLines.btn_next_or_back('SAVE_NEW_PIN'))
+                    await message.answer(f'Новый PIN_CODE: {"<b>"}{message.text}{"</b>"}\n'
+                                         f'Сохранить?', reply_markup=KBLines.btn_next_or_back('SAVE_NEW_PIN'),
+                                         parse_mode="HTML")
                     await StatesAdminUser.edit_user_pin_correct.set()
             else:
-                await message.answer(f'Введенный PIN_CODE: {message.text}\n'
-                                     f'Уже есть в системе. Введите другой PIN_CODE!')
+                await message.answer(f'Введенный PIN_CODE: {"<b>"}{message.text}{"</b>"}\n'
+                                     f'Уже есть в системе. Введите другой PIN_CODE!',
+                                     parse_mode='HTML')
         else:
-            await message.answer(f'Введенная строка: {message.text}\n'
-                                 f'PIN_CODE не подходит по длине!')
+            await message.answer(f'Введенная строка: {"<b>"}{message.text}{"</b>"}\n'
+                                 f'PIN_CODE не подходит по длине!',
+                                 parse_mode="HTML")
     else:
-        await message.answer(f'Введенная строка: {message.text}\n'
-                             f'PIN_CODE должен содержать только цифры!')
+        await message.answer(f'Введенная строка: {"<b>"}{message.text}{"</b>"}\n'
+                             f'PIN_CODE должен содержать только цифры!',
+                             parse_mode="HTML")
 
 
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Продолжить'],
