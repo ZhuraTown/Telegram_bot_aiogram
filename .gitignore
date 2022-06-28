@@ -5,5 +5,5 @@ __pycache__
 asdasd.py
 /venv
 .idea
-/data_base/tg_bot
+/data_base/tg_bot.db
 *.xlsx
