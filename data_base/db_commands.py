@@ -83,7 +83,6 @@ class CommandsDB:
         """ Получить все имена ГП """
         return [name[0] for name in session.query(User.name).filter(User.contractor == True).order_by(User.name).all()]
 
-
     @staticmethod
     def add_get_contractor(name: str, password: str or int):
         """ Добавить ГП в БД """
@@ -366,7 +365,7 @@ class CommandsDB:
         TB = TableWork
         return [(name.name_work, name.id_gp) for name in
                 session.query(TB.name_work, TB.contractor, TB.id_gp).
-                filter(TB.user_name == user_name, TB.date_created == date, TB.id_gp == id_gp).distinct().all()]
+                    filter(TB.user_name == user_name, TB.date_created == date, TB.id_gp == id_gp).distinct().all()]
 
     @staticmethod
     def del_str_form_with_name_work_or_id_form(id_form: str or int = None, name_work: str = None):
@@ -477,8 +476,6 @@ class CommandsDB:
             return False
         finally:
             session.commit()
-
-
 
     @staticmethod
     def change_state_reminder_chat_id(chat_id: str or int, is_remind: bool):

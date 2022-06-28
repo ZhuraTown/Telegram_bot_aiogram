@@ -1,0 +1,26 @@
+version: "3"
+
+volumes:
+  db_DATA: {}
+
+
+services:
+  tg_bot:
+    container_name: "tg_bot"
+    build: .
+    command: python ./bot_telegram.py
+    depends_on:
+      - flask_server
+    volumes:
+      - db_DATA:/Telegram_bot_aiogram/data_base
+
+
+  flask_server:
+    container_name: "flask_server"
+    build: .
+    working_dir: '/Telegram_bot_aiogram/flask_server'
+    command: ['flask', 'run', '--host', '0.0.0.0', '--port', '5000']
+    ports:
+      - 5000:5000
+    volumes:
+      - db_DATA:/Telegram_bot_aiogram/data_base
