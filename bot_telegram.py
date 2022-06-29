@@ -1,6 +1,4 @@
-import asyncio
-
-from create_bot import bot, dp, create_bot_factory
+from create_bot import dp, create_bot_factory
 
 from handlers.users import register_handlers_users
 from handlers.admin import register_handlers_admin

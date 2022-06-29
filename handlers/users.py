@@ -592,6 +592,7 @@ async def create_form_with_name(call: CallbackQuery, state: FSMContext):
         await call.message.edit_text(f"{hlink('Ссылка на форму', url_create_form)}",
                                      reply_markup=KBLines.btn_back('NEW_FORM'),
                                      parse_mode=ParseMode.HTML)
+        CommandsDB.change_state_reminder_chat_id(call.message.chat.id, is_remind=False)
 
 
 def register_handlers_users(dp: Dispatcher):

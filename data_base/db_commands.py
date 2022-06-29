@@ -494,6 +494,7 @@ class CommandsDB:
             session.commit()
 
     @staticmethod
-    def get_users_with_chat_id_is_remind():
+    def get_users_with_chat_id_is_remind(is_remind: bool ):
+        """ П """
         TB = TableReminder
-        return session.query(TB.chat_id).filter(TB.is_remind == True).all()
+        return session.query(TB.chat_id).filter(TB.is_remind == is_remind).all()
