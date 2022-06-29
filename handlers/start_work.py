@@ -16,8 +16,6 @@ async def command_start(message: types.Message, state: FSMContext):
     await AuthorizationUser.write_password.set()
 
 
-
-
 @dp.callback_query_handler(menu_callback_user.filter(name_btn=['Выйти'],
                                                      step_menu=['USER_MAIN_PAGE']),
                            state=[StatesUsers.start_user_panel])
@@ -30,7 +28,7 @@ async def command_start(message: types.Message, state: FSMContext):
                                   AuthorizationUser.correct_password_user])
 async def command_start_back(call: CallbackQuery, state: FSMContext):
     await state.reset_state()
-    CommandsDB.change_state_reminder_chat_id(call.id, False)
+    # CommandsDB.change_state_reminder_chat_id(call.id, False)
     await call.message.edit_text('Вы вернулись в стартовое меню\n'
                                  'Цель бота, упростить заполнение табеля рабочего времени сотрудников Лахта Центр\n'
                                  'Введите PIN_CODE для входа в личный кабинет', reply_markup=None)
@@ -62,7 +60,7 @@ async def authorization_step(message: types.Message, state: FSMContext):
                 data['GP'] = pin_cods[msg][3]
                 data['is_GP'] = pin_cods[msg][4]
                 data['id_GP'] = pin_cods[msg][5]
-                CommandsDB.add_new_chat_id_user(message.chat.id)
+                CommandsDB.add_new_chat_id_user(message.from_user.id)
                 if data['is_GP']:
                     await message.answer(
                         f'Вы авторизовались как ГП: {"<b>"}{pin_cods[msg][0]}{"</b>"}\n'
@@ -79,7 +77,6 @@ async def authorization_step(message: types.Message, state: FSMContext):
                         f'Кнопку {"<b>"}Назад{"</b>"}, чтобы вернуться к вводу пароля',
                         parse_mode='HTML', reply_markup=KBLines.btn_next_or_back('AUTH_USER'))
 
-
                 await AuthorizationUser.correct_password_user.set()
     else:
         await message.answer('Такого PINCODE нету в системе. Уточните свой пароль')
@@ -90,7 +87,6 @@ async def restart_auth(call: CallbackQuery):
                                  'Введите PINCODE для авторизации.',
                                  reply_markup=None)
     await AuthorizationUser.write_password.set()
-
 
 
 async def command_help(message: types.Message):
